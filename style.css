@@ -90,8 +90,8 @@ html, body {
 /* Joueur */
 #player {
     position: absolute;
-    width: 50px;  /* <-- Changement : Plus grand */
-    height: 50px; /* <-- Changement : Plus grand */
+    width: 45px;  /* <-- Changement : Plus grand */
+    height: 45px; /* <-- Changement : Plus grand */
     background-color: red; /* Placeholder */
     border: 1px solid black; /* Placeholder */
     /* Position initiale horizontale (fixe) */

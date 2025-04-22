@@ -23,13 +23,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Positions verticales des lignes en % du bas de playableArea (du bas vers le haut)
     const LANES = [15, 50, 85]; // Index 0=bas, 1=milieu, 2=haut
     // Positions horizontales des "routes" où les voitures peuvent traverser (en % de la largeur de playableArea)
-    const ROAD_POSITIONS_HORIZONTAL = [25, 50, 75]; // Exemple : 3 routes
+    const ROAD_POSITIONS_HORIZONTAL = [50, 75, 90]; // Exemple : 3 routes
+    const GLOBAL_SCALE = 2.3;
 
     // NOUVEAU : Paramètre global pour la densité/fréquence des obstacles
     // Une valeur de 1.0 correspond à la baseObstacleFrequency définie dans chaque phase.
     // Une valeur plus élevée (ex: 1.5) rend les obstacles 50% plus fréquents.
     // Une valeur plus basse (ex: 0.5) rend les obstacles 50% moins fréquents.
-    const GLOBAL_OBSTACLE_DENSITY_FACTOR = 1.0; // Ajuste cette valeur pour changer la difficulté
+    const GLOBAL_OBSTACLE_DENSITY_FACTOR = 0.5; // Ajuste cette valeur pour changer la difficulté
 
     // NOUVEAU : Paramètre pour la vitesse de démarrage initiale (très lente)
     const INITIAL_START_SPEED = 10; // pixels par seconde (une valeur très basse)
@@ -65,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
             maxSpeedFactor: 2.5,
             backgroundStyle: 'linear-gradient(to bottom, #87CEEB, #7CFC00)', // Ciel + Parc/Ville
             playableAreaStyle: '#aaa', // Trottoir/Passages piétons
-            obstacleTypes: ['pieton', 'egout', 'poubelle', 'voiture', 'pieton-sens-inverse', 'voiture-statique', 'voiture-verticale'],
+            obstacleTypes: ['pieton', 'egout', 'poubelle', 'voiture', 'pieton-sens-inverse', 'voiture-statique', 'voiture-verticale', 'pieton-verticale'],
             baseObstacleFrequency: 1500
         }
     ];
@@ -74,14 +75,15 @@ document.addEventListener('DOMContentLoaded', () => {
      const OBSTACLE_CONFIG = {
         'peniche': { className: 'peniche', width: 120, height: 60, speedFactor: 1.0, isVertical: false },
         'dechet': { className: 'dechet', width: 30, height: 30, speedFactor: 1.0, isVertical: false },
-        'voiture': { className: 'voiture', width: 80, height: 45, speedFactor: 1.0, isVertical: false }, // Voiture horizontale "immobile"
+        'voiture': { className: 'voiture', width: 45, height: 80, speedFactor: 1.0, isVertical: false }, // Voiture horizontale "immobile"
         'voiture-statique': { className: 'voiture-statique', width: 85, height: 45, speedFactor: 1.0, isVertical: false }, // Voiture stationnée
         'pieton': { className: 'pieton', width: 35, height: 35, speedFactor: 0.8, isVertical: false }, // Piéton même sens (plus lent que le joueur)
         'pieton-sens-inverse': { className: 'pieton-sens-inverse', width: 35, height: 35, speedFactor: 1.5, isVertical: false }, // Piéton sens inverse (plus rapide horiz.)
         'poubelle': { className: 'poubelle', width: 40, height: 50, speedFactor: 1.0, isVertical: false },
         'egout': { className: 'egout', width: 45, height: 15, speedFactor: 1.0, isVertical: false },
 
-        'voiture-verticale': { className: 'voiture-verticale', width: 70, height: 40, verticalSpeed: 200, speedFactor: 1.0, isVertical: true } // Vitesse verticale fixe, speedFactor horiz.
+        'voiture-verticale': { className: 'voiture-verticale', width: 45, height: 85, verticalSpeed: 250, speedFactor: 1.0, isVertical: true }, // Vitesse verticale fixe, speedFactor horiz.
+        'pieton-verticale': { className: 'pieton', width: 35, height: 35, verticalSpeed: 50, speedFactor: 1.5, isVertical: true }, // Piéton verticales
      };
 
 
@@ -104,14 +106,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let backgroundOffset = 0; // Pour le défilement manuel du fond lointain
     let playableAreaOffset = 0; // Pour le défilement manuel de l'avant-plan
 
+    // Facteur global pour réduire la distance parcourue
+    // 1.0 = distance normale, 0.5 = moitié de la distance, 2.0 = double distance   
+    const GLOBAL_DISTANCE_FACTOR = 0.8;
+
     // --- Fonctions Principales ---
 
     function updateUI() {
         const currentPhase = PHASES[currentPhaseIndex];
-        modeDisplay.textContent = `Mode: ${currentPhase.name}`;
+        modeDisplay.textContent = `Étape : ${currentPhase.name}`;
         const distanceRemaining = Math.max(0, (TOTAL_GAME_DISTANCE - distanceCovered) / 1000);
-        distanceDisplay.textContent = `Distance: ${distanceRemaining.toFixed(2)} km`;
-        timerDisplay.textContent = `Temps: ${formatTime(gameTime)}`;
+        distanceDisplay.textContent = `Distance jusqu'à Bobigny : ${distanceRemaining.toFixed(2)} km`;
+        timerDisplay.textContent = `Heures passées: ${formatTime(gameTime)}`;
 
         // NOUVEAU : Message "Accélérer" au début de chaque phase si la vitesse est très basse
         const startMessageElement = document.getElementById('start-message');
@@ -156,12 +162,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
      // Calcule les mètres parcourus par pixel de défilement à la vitesse de base de la phase
      function getMetersPerPixelAtBaseSpeed(phase) {
-         const duration = getPhaseDurationSeconds(phase);
-         if (duration <= 0 || phase.baseSpeed <= 0) return 0;
-         const startDistance = (currentPhaseIndex === 0) ? 0 : PHASES[currentPhaseIndex - 1].distanceThreshold;
-         const phaseDistance = phase.distanceThreshold - startDistance;
-         return phaseDistance / (phase.baseSpeed * duration);
-     }
+        const duration = getPhaseDurationSeconds(phase);
+        if (duration <= 0 || phase.baseSpeed <= 0) return 0;
+        const startDistance = (currentPhaseIndex === 0)
+            ? 0
+            : PHASES[currentPhaseIndex - 1].distanceThreshold;
+        const phaseDistance = phase.distanceThreshold - startDistance;
+        // distance / (pixels totaux) = mètre par pixel
+        const mpp = phaseDistance / (phase.baseSpeed * duration);
+        // ← ON MULTIPLIE PAR LE FACTEUR GLOBAL
+        return mpp * GLOBAL_DISTANCE_FACTOR;
+    }
 
 
     function setPhase(phaseIndex) {
@@ -237,37 +248,39 @@ document.addEventListener('DOMContentLoaded', () => {
              return;
         }
 
-        const obstacleElement = document.createElement('div');
-        obstacleElement.classList.add('obstacle', config.className);
-        obstacleElement.style.width = `${config.width}px`;
-        obstacleElement.style.height = `${config.height}px`;
-
-        const playableAreaWidth = playableArea.offsetWidth;
-        const playableAreaHeight = playableArea.offsetHeight;
         let initialX, initialY;
         let laneIndex = -1;
+        const playableAreaWidth = playableArea.offsetWidth;
+        const playableAreaHeight = playableArea.offsetHeight;
+
+                // création de l’élément
+        const obstacleElement = document.createElement('div');
+        obstacleElement.classList.add('obstacle', config.className);
+
+        // *ici* on applique le scale global*
+        const w = config.width  * GLOBAL_SCALE;
+        const h = config.height * GLOBAL_SCALE;
+        obstacleElement.style.width  = `${w}px`;
+        obstacleElement.style.height = `${h}px`;
+
+
+ 
 
         if (config.isVertical) {
-            // Obstacle vertical (voiture qui traverse)
-            const roadPercent = ROAD_POSITIONS_HORIZONTAL[Math.floor(Math.random() * ROAD_POSITIONS_HORIZONTAL.length)];
-            initialX = (roadPercent / 100) * playableAreaWidth - config.width / 2;
-            initialY = -config.height;
-
-             // Optionnel: Petite variation horizontale au spawn
+            // choix de la route
+            const roadPercent = ROAD_POSITIONS_HORIZONTAL[
+              Math.floor(Math.random() * ROAD_POSITIONS_HORIZONTAL.length)
+            ];
+            initialX = (roadPercent / 100) * playableAreaWidth - w / 2;
+            initialY = -h;
             initialX += (Math.random() - 0.5) * 15;
-
-
-        } else {
-            // Obstacle horizontal
+          } else {
             initialX = playableAreaWidth + 50;
-            laneIndex = Math.floor(Math.random() * LANES.length);
+            const laneIndex = Math.floor(Math.random() * LANES.length);
             const laneBottomPercent = LANES[laneIndex];
-            initialY = (100 - laneBottomPercent) / 100 * playableAreaHeight - config.height / 2;
-
-             // Optionnel: Petite variation verticale au spawn
+            initialY = (100 - laneBottomPercent) / 100 * playableAreaHeight - h / 2;
             initialY += (Math.random() - 0.5) * 10;
-
-        }
+          }
 
         obstacleElement.style.left = `${initialX}px`;
         obstacleElement.style.top = `${initialY}px`;
@@ -317,8 +330,8 @@ document.addEventListener('DOMContentLoaded', () => {
             element.style.top = `${obstacle.y}px`;
 
             // --- Vérification de suppression (hors écran) ---
-            const obstacleWidth = config.width;
-            const obstacleHeight = config.height;
+            const obstacleWidth = config.width * GLOBAL_SCALE;
+            const obstacleHeight = config.height * GLOBAL_SCALE;
 
             let shouldRemove = false;
 
@@ -367,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function increaseDifficulty() {
         // Augmenter la vitesse max légèrement tous les X mètres
-        const distanceMilestone = 1000; // Tous les 1 km
+        const distanceMilestone = 1500; // Tous les 1 km
         const speedIncreaseFactor = 1.02; // +2% vitesse max par palier
 
         // Calcul basé sur la distance parcourue totale
@@ -415,8 +428,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Mises à jour ---
 
         // 1. Vitesse du joueur (interpolation douce)
-        const acceleration = 300; // px/s²
-        const deceleration = 400; // px/s²
+        const acceleration = 1000; // px/s²
+        const deceleration = 1000; // px/s²
         if (currentSpeed < targetSpeed) {
             currentSpeed = Math.min(targetSpeed, currentSpeed + acceleration * deltaTime);
         } else if (currentSpeed > targetSpeed) {
@@ -531,7 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState = 'gameOver';
         clearInterval(timerInterval); // Arrêter le chrono
         cancelAnimationFrame(gameLoopId); // Arrêter la boucle de jeu
-        finalTimeDisplay.textContent = `Temps réalisé : ${formatTime(gameTime)}`;
+        finalTimeDisplay.textContent = `Malheureusement vous n'êtes pas arrivé au travail vivant aujourd'hui...`;
         gameOverScreen.querySelector('h2').textContent = "Game Over !";
         // Changer l'image si tu as un sprite spécifique pour la défaite
         // document.getElementById('victory-image').src = 'path/to/gameover.png';
@@ -545,7 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearInterval(timerInterval); // Arrêter le chrono
         cancelAnimationFrame(gameLoopId); // Arrêter la boucle de jeu
 
-        finalTimeDisplay.textContent = `Temps réalisé : ${formatTime(gameTime)}`;
+        finalTimeDisplay.textContent = `Bravo vous avez seulement mis ${formatTime(gameTime)} pour arriver au travail`;
         gameOverScreen.querySelector('h2').textContent = "Arrivé à Bobigny !";
         // Afficher l'image de victoire (celle définie dans l'HTML par défaut ou changer ici)
         // document.getElementById('victory-image').src = 'path/to/victory.png';
@@ -569,7 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameState !== 'running') return;
         // Réduit la vitesse cible vers la minSpeed
         // Utilise une valeur soustraite plutôt qu'un multiplicateur quand la vitesse est très faible
-         const decrement = Math.max(5, targetSpeed * 0.1); // Réduit d'au moins 5 px/s ou 10% de la cible
+         const decrement = Math.max(5, targetSpeed * 0.3); // Réduit d'au moins 5 px/s ou 10% de la cible
         targetSpeed = Math.max(minSpeed, targetSpeed - decrement);
          // console.log("Slow Down - Target Speed:", targetSpeed.toFixed(1));
     }
@@ -675,11 +688,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 event.preventDefault();
                 break;
             case 'ArrowUp': // Flèche haut pour monter de ligne
-                handleChangeLane('up');
+                handleChangeLane('down');
                 event.preventDefault();
                 break;
             case 'ArrowDown': // Flèche bas pour descendre de ligne
-                handleChangeLane('down');
+                handleChangeLane('up');
                 event.preventDefault();
                 break;
             // Add other keys if needed
@@ -697,9 +710,13 @@ document.addEventListener('DOMContentLoaded', () => {
         gameOverScreen.style.display = 'none';
         movePlayerToLane(playerLane);
         // Set initial UI text before game starts
-         modeDisplay.textContent = `Mode: Prêt`;
-         distanceDisplay.textContent = `Distance: ${TOTAL_GAME_DISTANCE / 1000} km`;
-         timerDisplay.textContent = `Temps: 00:00`;
+         modeDisplay.textContent = `Étape : Prêt`;
+         distanceDisplay.textContent = `Distance jusqu'à Bobigny : ${TOTAL_GAME_DISTANCE / 1000} km`;
+         timerDisplay.textContent = `Heures passées : 00:00`;
+
+         const playerRect = player.getBoundingClientRect();
+        player.style.width  = `${playerRect.width  * GLOBAL_SCALE}px`;
+        player.style.height = `${playerRect.height * GLOBAL_SCALE}px`;
     }
 
     initializeApp();
