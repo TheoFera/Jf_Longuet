@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Jean-François va au travail</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Interface Utilisateur -->
+        <div id="ui-bar">
+            <span id="mode-display">Mode: Attente</span>
+            <span id="distance-display">Distance: 15.00 km</span>
+            <span id="timer-display">Temps: 00:00</span>
+        </div>
+
+        <!-- Zone de Jeu -->
+        <div id="game-area">
+            <!-- Arrière-plan (Défilement géré en CSS/JS) -->
+            <div id="background"></div>
+
+            <!-- Zone Jouable (Avant-plan) -->
+            <div id="playable-area">
+                <!-- Le joueur (Jean-François) -->
+                <div id="player"></div>
+                <!-- Conteneur pour les obstacles -->
+                <div id="obstacles-container">
+                    <!-- Les obstacles seront ajoutés ici par JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Zones de Contrôle Invisibles (pour le tactile) -->
+        <div id="controls">
+            <div id="control-left"></div>
+            <div id="control-right"></div>
+        </div>
+
+        <!-- Écran de Fin de Partie -->
+        <div id="game-over-screen" style="display: none;">
+            <!-- Remplacer 'placeholder-image.png' par le chemin vers l'image du pot de départ -->
+            <img src="placeholder-pot-depart.png" alt="Pot de départ !" id="victory-image" style="width:150px; height:150px; background-color: #ccc; margin-bottom: 20px;">
+            <h2>Arrivé à Bobigny !</h2>
+            <p id="final-time">Temps réalisé : 00:00</p>
+            <button id="restart-button">Rejouer</button>
+        </div>
+
+         <!-- Écran de Début (Optionnel) -->
+         <div id="start-screen">
+            <h1>Jean-François va au travail</h1>
+            <p>(Un triathlon urbain dans le 93)</p>
+            <button id="start-button">Commencer</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
