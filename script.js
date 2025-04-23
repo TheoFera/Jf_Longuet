@@ -630,42 +630,45 @@ document.addEventListener('DOMContentLoaded', () => {
      controlRight.addEventListener('pointerleave', () => { isPointerDownOnControl = false; });
 
     // Swipe (sur le conteneur principal qui couvre tout sauf l'UI bar)
-        gameContainer.addEventListener('pointerdown', (e) => {
-            if (e.target === uiBar || e.target.tagName === 'BUTTON' || e.target.closest('#controls')) {
-                return;
-            }
-            touchStartX = e.clientX;
-            touchStartY = e.clientY;
-            isSwiping = true;
-        }, { passive: false });
-    
-        gameContainer.addEventListener('pointermove', (e) => {
-            if (!isSwiping || gameState !== 'running' || isPointerDownOnControl) {
-                return;
-            }
-            const deltaX = e.clientX - touchStartX;
-            const deltaY = e.clientY - touchStartY;
-    
-            if (Math.abs(deltaY) > swipeThreshold && Math.abs(deltaY) > Math.abs(deltaX)) {
-                if (deltaY < 0) { handleChangeLane('up'); } else { handleChangeLane('down'); }
-                isSwiping = false;
-                 e.preventDefault();
-            }
-        }, { passive: false });
-    
-        gameContainer.addEventListener('pointerup', (e) => {
+    gameContainer.addEventListener('pointerdown', (e) => {
+        /*if (e.target === uiBar || e.target.tagName === 'BUTTON' || e.target.closest('#controls')) {
+            return;
+        }*/
+        touchStartX = e.clientX;
+        touchStartY = e.clientY;
+        isSwiping = true;
+        e.preventDefault();
+    }, { passive: false });
+
+    gameContainer.addEventListener('pointermove', (e) => {
+        if (!isSwiping || gameState !== 'running' || isPointerDownOnControl) {
+            return;
+        }
+        const deltaX = e.clientX - touchStartX;
+        const deltaY = e.clientY - touchStartY;
+
+        if (Math.abs(deltaY) > swipeThreshold && Math.abs(deltaY) > Math.abs(deltaX)) {
+            handleChangeLane(deltaY < 0 ? 'up' : 'down');
             isSwiping = false;
-            isPointerDownOnControl = false;
-            touchStartX = 0;
-            touchStartY = 0;
-        }, { passive: false });
-    
-        gameContainer.addEventListener('pointercancel', (e) => {
-            isSwiping = false;
-            isPointerDownOnControl = false;
-            touchStartX = 0;
-            touchStartY = 0;
-        }, { passive: false });
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    gameContainer.addEventListener('pointerup', (e) => {
+        isSwiping = false;
+        isPointerDownOnControl = false;
+        touchStartX = 0;
+        touchStartY = 0;
+    }, { passive: false });
+
+    gameContainer.addEventListener('pointercancel', (e) => {
+        isSwiping = false;
+        isPointerDownOnControl = false;
+        touchStartX = 0;
+        touchStartY = 0;
+    }, { passive: false });
+
+
     playableArea.addEventListener('pointerdown', (e) => {
         if (e.target === uiBar || e.target.tagName === 'BUTTON' || e.target.closest('#controls')) {
             return;
@@ -673,6 +676,7 @@ document.addEventListener('DOMContentLoaded', () => {
         touchStartX = e.clientX;
         touchStartY = e.clientY;
         isSwiping = true;
+        e.preventDefault();
     }, { passive: false });
 
     playableArea.addEventListener('pointermove', (e) => {
@@ -683,9 +687,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const deltaY = e.clientY - touchStartY;
 
         if (Math.abs(deltaY) > swipeThreshold && Math.abs(deltaY) > Math.abs(deltaX)) {
-            if (deltaY < 0) { handleChangeLane('up'); } else { handleChangeLane('down'); }
+            handleChangeLane(deltaY < 0 ? 'up' : 'down');
             isSwiping = false;
-             e.preventDefault();
+            e.preventDefault();
         }
     }, { passive: false });
 

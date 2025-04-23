@@ -8,10 +8,11 @@
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
-    touch-action: manipulation; /* Empêche le zoom/défilement tactile par défaut */
+    /*touch-action: manipulation;  Empêche le zoom/défilement tactile par défaut */
 }
 
 html, body {
+    overscroll-behavior: none;  /* empêche le “bounce” iOS/Android */
     width: 100%;
     height: 100%;
     overflow: hidden; /* Empêche le défilement de la page principale */
@@ -88,7 +89,7 @@ html, body {
     z-index: 5;
      background-size: auto 100%; /* Hauteur complète, largeur auto */
      background-repeat: repeat-x;
-    pointer-events: none; /* Ne capture pas les événements */
+    pointer-events: auto; /* ← autorise les événements sur la zone jouable */
 }
 
 /* Joueur */
