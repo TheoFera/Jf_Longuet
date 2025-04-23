@@ -27,6 +27,10 @@ html, body {
     overflow: hidden; /* Cache ce qui dépasse */
 }
 
+#game-container, #playable-area {
+    touch-action: none;
+  }
+
 /* Interface Utilisateur */
 #ui-bar {
     position: absolute;
