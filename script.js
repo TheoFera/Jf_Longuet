@@ -30,38 +30,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const PHASES = [
         {
             name: "Natation", distanceThreshold: 1300, baseSpeed: 100,
-            minSpeedFactor: 0.05, maxSpeedFactor: 1.8,
+            minSpeedFactor: 0.05, maxSpeedFactor: 2,
             backgroundStyle: 'linear-gradient(to bottom, #87CEEB, #4682B4)',
             playableAreaStyle: '#black', obstacleTypes: ['peniche', 'dechet'],
             baseObstacleFrequency: 2000
         },
         {
             name: "Vélo", distanceThreshold: 11500, baseSpeed: 200,
-            minSpeedFactor: 0.1, maxSpeedFactor: 3.5,
+            minSpeedFactor: 0.1, maxSpeedFactor: 5,
             backgroundStyle: 'linear-gradient(to bottom, #87CEEB, #A9A9A9)',
             playableAreaStyle: '#666', obstacleTypes: ['voiture', 'egout', 'poubelle', 'voiture-statique', 'voiture-verticale'],
-            baseObstacleFrequency: 2000
+            baseObstacleFrequency: 2200
         },
         {
             name: "Course", distanceThreshold: TOTAL_GAME_DISTANCE, baseSpeed: 100,
-            minSpeedFactor: 0.1, maxSpeedFactor: 2.5,
+            minSpeedFactor: 0.1, maxSpeedFactor: 3,
             backgroundStyle: 'linear-gradient(to bottom, #87CEEB, #7CFC00)',
             playableAreaStyle: '#aaa', obstacleTypes: ['pieton', 'egout', 'poubelle', 'voiture', 'pieton-sens-inverse', 'voiture-statique', 'voiture-verticale', 'pieton-verticale'],
-            baseObstacleFrequency: 1500
+            baseObstacleFrequency: 1700
         }
     ];
 
     const OBSTACLE_CONFIG = {
-        'peniche': { className: 'peniche', width: 120, height: 60, speedFactor: 1.0, isVertical: false },
+        'peniche': { className: 'peniche', width: 150, height: 55, speedFactor: 1.0, isVertical: false },
         'dechet': { className: 'dechet', width: 30, height: 30, speedFactor: 1.0, isVertical: false },
         'voiture': { className: 'voiture', width: 45, height: 80, speedFactor: 1.0, isVertical: false },
         'voiture-statique': { className: 'voiture-statique', width: 85, height: 45, speedFactor: 1.0, isVertical: false },
-        'pieton': { className: 'pieton', width: 35, height: 35, speedFactor: 0.8, isVertical: false },
+        'pieton': { className: 'pieton', width: 35, height: 35, speedFactor: 1.0, isVertical: false },
         'pieton-sens-inverse': { className: 'pieton-sens-inverse', width: 35, height: 35, speedFactor: 1.5, isVertical: false },
         'poubelle': { className: 'poubelle', width: 40, height: 50, speedFactor: 1.0, isVertical: false },
         'egout': { className: 'egout', width: 45, height: 15, speedFactor: 1.0, isVertical: false },
         'voiture-verticale': { className: 'voiture-verticale', width: 45, height: 85, verticalSpeed: 250, speedFactor: 1.0, isVertical: true },
-        'pieton-verticale': { className: 'pieton', width: 35, height: 35, verticalSpeed: 50, speedFactor: 1.5, isVertical: true },
+        'pieton-verticale': { className: 'pieton', width: 35, height: 35, verticalSpeed: 50, speedFactor: 1.0, isVertical: true },
      };
 
      const SPRITES = {
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modeDisplay.textContent = `Étape : ${currentPhase.name}`;
         const distanceRemaining = Math.max(0, (TOTAL_GAME_DISTANCE - distanceCovered) / 1000);
         distanceDisplay.textContent = `Distance jusqu'à Bobigny : ${distanceRemaining.toFixed(2)} km`;
-        timerDisplay.textContent = `Heures passées: ${formatTime(gameTime)}`;
+        timerDisplay.textContent = `Temps : ${formatTime(gameTime)}`;
 
         const startMessageElement = document.getElementById('start-message');
         if (gameState === 'running' && currentSpeed < PHASES[currentPhaseIndex].baseSpeed * 0.2 && gameTime < 5) {
@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  const msg = document.createElement('div');
                  msg.id = 'start-message';
                  // MODIFIÉ : Texte du message pour inclure swipe
-                 msg.textContent = "Swipe Droite / Flèche Droite pour Accélérer !";
+                 msg.textContent = "Swipe vers la droite pour Accélérer !";
                  msg.style.cssText = `
                     position: absolute;
                     top: 50%;
@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function formatTime(seconds) {
         const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
         const secs = Math.floor(seconds % 60).toString().padStart(2, '0');
-        return `${mins}:${secs}`;
+        return `${mins}h${secs}`;
     }
 
      function getPhaseDurationSeconds(phase) {
@@ -375,8 +375,8 @@ document.addEventListener('DOMContentLoaded', () => {
         lastTimestamp = timestamp;
 
         // 1. Vitesse
-        const acceleration = 1000;
-        const deceleration = 1000;
+        const acceleration = 2000;
+        const deceleration = 2000;
         if (currentSpeed < targetSpeed) {
             currentSpeed = Math.min(targetSpeed, currentSpeed + acceleration * deltaTime);
         } else if (currentSpeed > targetSpeed) {
@@ -478,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState = 'gameOver';
         clearInterval(timerInterval);
         cancelAnimationFrame(gameLoopId);
-        finalTimeDisplay.textContent = `Bravo vous avez seulement mis ${formatTime(gameTime)} heures pour arriver au travail`;
+        finalTimeDisplay.textContent = `Bravo vous avez seulement mis ${formatTime(gameTime)} pour arriver au travail`;
         gameOverScreen.querySelector('h2').textContent = "Arrivé à Bobigny !";
         gameOverScreen.style.display = 'flex';
     }
@@ -517,7 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchStartX = 0;
     let touchStartY = 0;
     let isSwiping = false;
-    const swipeThreshold = 30; // Pixels minimum pour détecter un swipe (un peu augmenté pour éviter déclenchement accidentel)
+    const swipeThreshold = 20; // Pixels minimum pour détecter un swipe (un peu augmenté pour éviter déclenchement accidentel)
 
     // SUPPRIMÉ : Event listeners pour controlLeft et controlRight
 
@@ -633,7 +633,7 @@ document.addEventListener('DOMContentLoaded', () => {
         movePlayerToLane(playerLane);
         modeDisplay.textContent = `Étape : Prêt`;
         distanceDisplay.textContent = `Distance jusqu'à Bobigny : ${TOTAL_GAME_DISTANCE / 1000} km`;
-        timerDisplay.textContent = `Heures passées : 00:00`;
+        timerDisplay.textContent = `Temps : 00h00`;
         // Appliquer le scale global au joueur une fois au début
         const playerElement = document.getElementById('player'); // S'assurer qu'on a l'élément
         if(playerElement) {
