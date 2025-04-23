@@ -28,9 +28,10 @@ html, body {
     overflow: hidden; /* Cache ce qui dépasse */
 }
 
+/* Important: Permettre les actions tactiles sur la zone jouable */
 #game-container, #playable-area {
-    touch-action: none;
-  }
+    touch-action: none; /* Empêche le comportement par défaut du navigateur (zoom, scroll) sur le toucher */
+}
 
 /* Interface Utilisateur */
 #ui-bar {
@@ -56,8 +57,8 @@ html, body {
     left: 0;
     width: 100%;
     overflow: hidden;
-    /* Permettre aux événements pointeur (touch/click) de passer aux éléments en dessous (#controls) */
-    pointer-events: none;
+    /* Permettre aux événements pointeur (touch/click) de passer aux éléments en dessous */
+    pointer-events: none; /* Le conteneur général ne réagit pas, mais ses enfants peuvent */
 }
 
 /* Arrière-plan (Défilement lointain) */
@@ -66,7 +67,7 @@ html, body {
     top: 0;
     left: 0;
     width: 200%; /* Double largeur pour le défilement */
-    height: 25%; /* <-- Changement : Un quart de la zone de jeu */
+    height: 25%; /* Un quart de la zone de jeu */
     /* Sera défini par JS pour chaque phase (couleur/dégradé ou image) */
     background-color: lightblue; /* Défaut */
     background-size: auto 100%; /* Hauteur complète, largeur auto */
@@ -78,36 +79,34 @@ html, body {
 /* Zone Jouable (Avant-plan / Sol / Eau) */
 #playable-area {
     position: absolute;
-    top: 25%; /* <-- Changement : Commence sous l'arrière-plan */
+    top: 25%; /* Commence sous l'arrière-plan */
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 75%; /* <-- Changement : Les trois quarts de la zone de jeu */
+    height: 75%; /* Les trois quarts de la zone de jeu */
     /* Sera défini par JS pour chaque phase (couleur/dégradé ou image) */
     background-color: darkcyan; /* Défaut (eau) */
     border-top: 2px solid rgba(0,0,0,0.3);
     z-index: 5;
      background-size: auto 100%; /* Hauteur complète, largeur auto */
      background-repeat: repeat-x;
-    pointer-events: auto; /* ← autorise les événements sur la zone jouable */
+    pointer-events: auto; /* ← Autorise les événements pointeur (touch/mouse) sur cette zone */
 }
 
 /* Joueur */
 #player {
     position: absolute;
-    width: 45px;  /* <-- Changement : Plus grand */
-    height: 45px; /* <-- Changement : Plus grand */
+    width: 45px;
+    height: 45px;
     background-color: red; /* Placeholder */
     border: 1px solid black; /* Placeholder */
-    /* Position initiale horizontale (fixe) */
-    left: 10%; /* Positionné à 10% de la largeur de la zone jouable */
-    /* Position verticale (sera ajustée par JS sur les lignes) */
-    bottom: 50%; /* Ligne du milieu par défaut (sera surchargé par JS) */
-    transform: translateY(50%); /* Centre verticalement sur la ligne */
-    transition: bottom 0.2s ease-out; /* Animation changement de ligne */
+    left: 10%;
+    bottom: 50%; /* Ligne du milieu par défaut */
+    transform: translateY(50%);
+    transition: bottom 0.2s ease-out;
     z-index: 50;
-    pointer-events: none; /* Ne capture pas les événements */
-    border-radius: 50%; /* Aspect de nageur/coureur stylisé */
+    pointer-events: none;
+    border-radius: 50%;
 }
 
 /* Conteneur des Obstacles */
@@ -116,65 +115,35 @@ html, body {
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%; /* Prend la hauteur de la playable-area */
+    height: 100%;
     z-index: 40;
-    pointer-events: none; /* Ne capture pas les événements */
+    pointer-events: none;
 }
 
-/* Obstacles (styles de base, surchargés par les classes spécifiques) */
+/* Obstacles (styles de base) */
 .obstacle {
     position: absolute;
-    /* Dimensions par défaut (seront souvent surchargées par les classes spécifiques) */
-    width: 60px; /* <-- Changement : Plus grand */
-    height: 60px; /* <-- Changement : Plus grand */
+    width: 60px;
+    height: 60px;
     background-color: grey; /* Placeholder */
     border: 1px solid black; /* Placeholder */
-    pointer-events: none; /* Ne capture pas les événements */
-     /* Les positions 'right' ou 'left' + 'top' ou 'bottom' seront définies par JS */
+    pointer-events: none;
 }
 
-/* Styles spécifiques pour certains obstacles (ajuster tailles et formes pour le zoom) */
-.obstacle.peniche { background-color: brown; width: 120px; height: 60px; border-radius: 8px; } /* Plus grand */
-.obstacle.dechet { background-color: green; width: 30px; height: 30px; border-radius: 50%; } /* Plus grand */
-
-.obstacle.voiture-verticale { background-color: blue; width: 70px; height: 40px; border-radius: 5px; } /* Nouvelle classe pour voiture qui traverse */
-.obstacle.voiture { background-color: darkblue; width: 80px; height: 45px; border-radius: 5px; } /* Voiture horizontale (statique ou non) */
-.obstacle.voiture-statique { background-color: darkcyan; width: 85px; height: 45px; border-radius: 5px; } /* Variante statique */
-
-.obstacle.pieton { background-color: orange; width: 35px; height: 35px; border-radius: 50%; } /* Plus grand */
-.obstacle.pieton-sens-inverse { background-color: darkorange; width: 35px; height: 35px; border-radius: 50%; } /* Variante plus grande */
-
-.obstacle.poubelle { background-color: #444; width: 40px; height: 50px; border-radius: 5px;} /* Plus grand */
-.obstacle.egout { background-color: #666; width: 45px; height: 15px; border-radius: 3px;} /* Plus grand */
+/* Styles spécifiques pour certains obstacles */
+.obstacle.peniche { background-color: brown; width: 120px; height: 60px; border-radius: 8px; }
+.obstacle.dechet { background-color: green; width: 30px; height: 30px; border-radius: 50%; }
+.obstacle.voiture-verticale { background-color: blue; width: 70px; height: 40px; border-radius: 5px; }
+.obstacle.voiture { background-color: darkblue; width: 80px; height: 45px; border-radius: 5px; }
+.obstacle.voiture-statique { background-color: darkcyan; width: 85px; height: 45px; border-radius: 5px; }
+.obstacle.pieton { background-color: orange; width: 35px; height: 35px; border-radius: 50%; }
+.obstacle.pieton-sens-inverse { background-color: darkorange; width: 35px; height: 35px; border-radius: 50%; }
+.obstacle.poubelle { background-color: #444; width: 40px; height: 50px; border-radius: 5px;}
+.obstacle.egout { background-color: #666; width: 45px; height: 15px; border-radius: 3px;}
 
 
-/* Zones de Contrôle Tactile */
-#controls {
-    position: absolute;
-    top: calc(100% - 25%); /* 25% depuis le bas */
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 25%;  /* Hauteur de la zone de jeu */
-    z-index: 90; /* Au-dessus du jeu */
-    /* Les enfants (control-left, control-right) captureront les événements */
-    pointer-events: none; /* Le conteneur lui-même ne capture pas */
-}
-
-#control-left, #control-right {
-    position: absolute;
-    top: 0; /* Relativement à #controls */
-    bottom: 0;
-    width: 20%;
-    /* Décommenter pour visualiser les zones */
-    /* background-color: rgba(255, 0, 0, 0.05);
-    border: 1px dashed red; */
-     /* Permettre à ces divs de capturer les événements */
-    pointer-events: auto; /* Ces éléments captureront les clics/taps */
-}
-
-#control-left { left: 0; }
-#control-right { right: 0; }
+/* Zones de Contrôle Tactile (SUPPRIMÉES) */
+/* Les règles pour #controls, #control-left, #control-right ont été supprimées */
 
 
 /* Écrans de Début / Fin */
@@ -217,9 +186,9 @@ html, body {
     background-color: #45a049;
 }
 
-#victory-image { /* Style pour l'image placeholder */
+#victory-image {
     background-color: #ccc;
     border-radius: 5px;
-    display: block; /* Assure que le margin fonctionne */
+    display: block;
     margin-bottom: 20px;
 }
