@@ -589,9 +589,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleChangeLane(direction) {
         if (gameState !== 'running') return;
-        if (direction === 'up') {
+        if (direction === 'down') {
             movePlayerToLane(playerLane - 1); // Essayer d'aller à la ligne supérieure
-        } else if (direction === 'down') {
+        } else if (direction === 'up') {
             movePlayerToLane(playerLane + 1); // Essayer d'aller à la ligne inférieure
         }
         // movePlayerToLane gère déjà le clamping aux limites
@@ -631,9 +631,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Swipe (sur le conteneur principal qui couvre tout sauf l'UI bar)
     gameContainer.addEventListener('pointerdown', (e) => {
-        /*if (e.target === uiBar || e.target.tagName === 'BUTTON' || e.target.closest('#controls')) {
-            return;
-        }*/
+        if (e.target.closest('#control-left, #control-right')) return;
         touchStartX = e.clientX;
         touchStartY = e.clientY;
         isSwiping = true;
@@ -644,6 +642,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isSwiping || gameState !== 'running' || isPointerDownOnControl) {
             return;
         }
+        if (isPointerDownOnControl) return;
+        if (!isSwiping || gameState !== 'running') return;
         const deltaX = e.clientX - touchStartX;
         const deltaY = e.clientY - touchStartY;
 
@@ -673,6 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === uiBar || e.target.tagName === 'BUTTON' || e.target.closest('#controls')) {
             return;
         }
+        if (e.target.closest('#control-left, #control-right')) return;
         touchStartX = e.clientX;
         touchStartY = e.clientY;
         isSwiping = true;
@@ -685,6 +686,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const deltaX = e.clientX - touchStartX;
         const deltaY = e.clientY - touchStartY;
+        if (isPointerDownOnControl) return;
+        if (!isSwiping || gameState !== 'running') return;
 
         if (Math.abs(deltaY) > swipeThreshold && Math.abs(deltaY) > Math.abs(deltaX)) {
             handleChangeLane(deltaY < 0 ? 'up' : 'down');
@@ -728,11 +731,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 event.preventDefault();
                 break;
             case 'ArrowUp': // Flèche haut pour monter de ligne
-                handleChangeLane('down');
+                handleChangeLane('up');
                 event.preventDefault();
                 break;
             case 'ArrowDown': // Flèche bas pour descendre de ligne
-                handleChangeLane('up');
+                handleChangeLane('down');
                 event.preventDefault();
                 break;
             // Add other keys if needed
