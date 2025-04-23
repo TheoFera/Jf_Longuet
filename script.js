@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
             name: "Natation", distanceThreshold: 1300, baseSpeed: 100,
             minSpeedFactor: 0.05, maxSpeedFactor: 1.8,
             backgroundStyle: 'linear-gradient(to bottom, #87CEEB, #4682B4)',
-            playableAreaStyle: 'darkcyan', obstacleTypes: ['peniche', 'dechet'],
+            playableAreaStyle: '#black', obstacleTypes: ['peniche', 'dechet'],
             baseObstacleFrequency: 2000
         },
         {
@@ -63,6 +63,43 @@ document.addEventListener('DOMContentLoaded', () => {
         'voiture-verticale': { className: 'voiture-verticale', width: 45, height: 85, verticalSpeed: 250, speedFactor: 1.0, isVertical: true },
         'pieton-verticale': { className: 'pieton', width: 35, height: 35, verticalSpeed: 50, speedFactor: 1.5, isVertical: true },
      };
+
+     const SPRITES = {
+        swim : ['player_swim_0.png','player_swim_1.png'],
+        bike : ['player_bike_0.png','player_bike_1.png'],
+        run  : ['player_run_0.png' ,'player_run_1.png', 'player_run_2.png' ,'player_run_3.png']
+    };
+    const FRAME_DURATION = 150; // ms
+    let currentPhase = 'swim';
+    let frameIndex   = 0;
+    let spritesReady = false;
+    let animTimer    = null;
+    
+    const playerDiv   = document.getElementById('player');
+    const spriteImgEl = document.getElementById('player-sprite');
+    
+    // 2) Pré-chargement + fallback
+    const preload = src => new Promise((ok,ko)=>{
+        const img = new Image();
+        img.onload = () => ok();
+        img.onerror = () => ko(src);
+        img.src = `./sprites/${src}`;
+    });
+    Promise.allSettled(
+        Object.values(SPRITES).flat().map(preload)
+    ).then(results=>{
+        const failed = results.filter(r=>r.status==='rejected');
+        if(failed.length){
+            console.warn('Sprites manquants :', failed.map(f=>f.reason));
+            return;                // fallback ⇒ les formes restent visibles
+        }
+        // tout est OK
+        spritesReady = true;
+        playerDiv.classList.add('sprite-loaded');
+        spriteImgEl.style.display = 'block';
+        startSpriteAnimation();
+    });
+    
 
 
     // --- État du Jeu ---
@@ -120,6 +157,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function startSpriteAnimation(){
+        updateFrame(); // affiche la 1ʳᵉ image
+        animTimer = setInterval(updateFrame, FRAME_DURATION);
+    }
+    function updateFrame(){
+        spriteImgEl.src = `./sprites/${SPRITES[currentPhase][frameIndex]}`;
+        frameIndex = (frameIndex + 1) % SPRITES[currentPhase].length;
+    }
+    
+
     function formatTime(seconds) {
         const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
         const secs = Math.floor(seconds % 60).toString().padStart(2, '0');
@@ -143,11 +190,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setPhase(phaseIndex) {
+        // 1) Logique de phase existante
         currentPhaseIndex = phaseIndex;
         const phase = PHASES[phaseIndex];
         minSpeed = phase.baseSpeed * phase.minSpeedFactor;
-        maxSpeed = phase.baseSpeed * phase.maxSpeedFactor; // sera ajusté par increaseDifficulty
-
+        maxSpeed = phase.baseSpeed * phase.maxSpeedFactor;
+    
+        // arrière-plan
         background.style.backgroundColor = '';
         if (phase.backgroundStyle.startsWith('linear-gradient')) {
             background.style.backgroundImage = phase.backgroundStyle;
@@ -156,27 +205,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         background.style.backgroundSize = 'auto 100%';
         background.style.backgroundRepeat = 'repeat-x';
-        background.style.backgroundPositionX = '0px';
         backgroundOffset = 0;
-
+        background.style.backgroundPositionX = '0px';
+    
+        // sol / eau
         playableArea.style.backgroundColor = '';
-         if (phase.playableAreaStyle.startsWith('#') || phase.playableAreaStyle.startsWith('rgba') || phase.playableAreaStyle === '') {
-              playableArea.style.backgroundColor = phase.playableAreaStyle;
-              playableArea.style.backgroundImage = '';
-         } else {
-              playableArea.style.backgroundImage = `url(${phase.playableAreaStyle})`;
-         }
+        if (phase.playableAreaStyle.startsWith('#') || phase.playableAreaStyle.startsWith('rgba') || phase.playableAreaStyle === '') {
+            playableArea.style.backgroundColor = phase.playableAreaStyle;
+            playableArea.style.backgroundImage = '';
+        } else {
+            playableArea.style.backgroundImage = `url(${phase.playableAreaStyle})`;
+        }
         playableArea.style.backgroundSize = 'auto 100%';
         playableArea.style.backgroundRepeat = 'repeat-x';
-        playableArea.style.backgroundPositionX = '0px';
         playableAreaOffset = 0;
-
+        playableArea.style.backgroundPositionX = '0px';
+    
+        // 2) Hit-box et UI
         movePlayerToLane(playerLane);
         updateUI();
         console.log(`Phase changed to: ${phase.name}`);
         console.log(`Speed range: ${minSpeed.toFixed(1)} - ${maxSpeed.toFixed(1)} px/s (base: ${phase.baseSpeed.toFixed(1)})`);
+    
+        // ─────── NOUVEAU : Animation de sprite ───────
+        // mappe l’indice 0,1,2 → swim, bike, run
+        const spritePhases = ['swim', 'bike', 'run'];
+        currentPhase = spritePhases[phaseIndex];
+        frameIndex = 0;                             // repart du début de l’animation
+        if (spritesReady) {
+            updateFrame();                          // applique immédiatement la première frame
+        }
     }
-
+    
     function movePlayerToLane(laneIndex) {
         playerLane = Math.max(0, Math.min(LANES.length - 1, laneIndex));
         const targetBottomPercent = LANES[playerLane];
