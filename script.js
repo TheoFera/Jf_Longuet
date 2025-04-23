@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const LANES = [15, 50, 85]; // Index 0=bas, 1=milieu, 2=haut
     // Positions horizontales des "routes" où les voitures peuvent traverser (en % de la largeur de playableArea)
     const ROAD_POSITIONS_HORIZONTAL = [50, 75, 90]; // Exemple : 3 routes
-    const GLOBAL_SCALE = 2.3;
+    const GLOBAL_SCALE = 1.3;
 
     // NOUVEAU : Paramètre global pour la densité/fréquence des obstacles
     // Une valeur de 1.0 correspond à la baseObstacleFrequency définie dans chaque phase.
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
             distanceThreshold: 11500, // Fin du vélo à 12km
             baseSpeed: 200, // px/s (ajuster pour ~60s à vitesse base)
             minSpeedFactor: 0.1, // <-- Changement : Permet de ralentir beaucoup à vélo
-            maxSpeedFactor: 2.5,
+            maxSpeedFactor: 3.5,
             backgroundStyle: 'linear-gradient(to bottom, #87CEEB, #A9A9A9)', // Ciel + Bâtiments lointains
             playableAreaStyle: '#666', // Route
             obstacleTypes: ['voiture', 'egout', 'poubelle', 'voiture-statique', 'voiture-verticale'],
@@ -558,7 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearInterval(timerInterval); // Arrêter le chrono
         cancelAnimationFrame(gameLoopId); // Arrêter la boucle de jeu
 
-        finalTimeDisplay.textContent = `Bravo vous avez seulement mis ${formatTime(gameTime)} pour arriver au travail`;
+        finalTimeDisplay.textContent = `Bravo vous avez seulement mis ${formatTime(gameTime)} heures pour arriver au travail`;
         gameOverScreen.querySelector('h2').textContent = "Arrivé à Bobigny !";
         // Afficher l'image de victoire (celle définie dans l'HTML par défaut ou changer ici)
         // document.getElementById('victory-image').src = 'path/to/victory.png';
@@ -605,7 +605,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchStartX = 0;
     let touchStartY = 0;
     let isSwiping = false;
-    const swipeThreshold = 30; // Pixels minimum pour détecter un swipe
+    const swipeThreshold = 20; // Pixels minimum pour détecter un swipe
     let isPointerDownOnControl = false; // Pour distinguer tap sur zones de vitesse vs swipe
 
     // Tap gauche -> Ralentir
@@ -630,7 +630,7 @@ document.addEventListener('DOMContentLoaded', () => {
      controlRight.addEventListener('pointerleave', () => { isPointerDownOnControl = false; });
 
     // Swipe (sur le conteneur principal qui couvre tout sauf l'UI bar)
-    gameContainer.addEventListener('pointerdown', (e) => {
+    playableArea.addEventListener('pointerdown', (e) => {
         if (e.target === uiBar || e.target.tagName === 'BUTTON' || e.target.closest('#controls')) {
             return;
         }
@@ -639,28 +639,28 @@ document.addEventListener('DOMContentLoaded', () => {
         isSwiping = true;
     });
 
-    gameContainer.addEventListener('pointermove', (e) => {
+    playableArea.addEventListener('pointermove', (e) => {
         if (!isSwiping || gameState !== 'running' || isPointerDownOnControl) {
             return;
         }
         const deltaX = e.clientX - touchStartX;
         const deltaY = e.clientY - touchStartY;
 
-        if (Math.abs(deltaY) > swipeThreshold && Math.abs(deltaY) > Math.abs(deltaX) * 1.5) {
+        if (Math.abs(deltaY) > swipeThreshold && Math.abs(deltaY) > Math.abs(deltaX)) {
             if (deltaY < 0) { handleChangeLane('up'); } else { handleChangeLane('down'); }
             isSwiping = false;
              e.preventDefault();
         }
     });
 
-    gameContainer.addEventListener('pointerup', (e) => {
+    playableArea.addEventListener('pointerup', (e) => {
         isSwiping = false;
         isPointerDownOnControl = false;
         touchStartX = 0;
         touchStartY = 0;
     });
 
-     gameContainer.addEventListener('pointercancel', (e) => {
+    playableArea.addEventListener('pointercancel', (e) => {
         isSwiping = false;
         isPointerDownOnControl = false;
         touchStartX = 0;
