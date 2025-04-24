@@ -123,23 +123,28 @@ html, body {
 /* Obstacles (styles de base) */
 .obstacle {
     position: absolute;
-    width: 60px;
-    height: 60px;
+    /*width: 60px;
+    height: 60px;*/
     background-color: grey; /* Placeholder */
     border: 1px solid black; /* Placeholder */
     pointer-events: none;
 }
 
-/* Styles spécifiques pour certains obstacles */
-.obstacle.peniche { background-color: brown; width: 120px; height: 60px; border-radius: 8px; }
-.obstacle.dechet { background-color: green; width: 30px; height: 30px; border-radius: 50%; }
-.obstacle.voiture-verticale { background-color: blue; width: 70px; height: 40px; border-radius: 5px; }
-.obstacle.voiture { background-color: darkblue; width: 80px; height: 45px; border-radius: 5px; }
-.obstacle.voiture-statique { background-color: darkcyan; width: 85px; height: 45px; border-radius: 5px; }
-.obstacle.pieton { background-color: orange; width: 35px; height: 35px; border-radius: 50%; }
-.obstacle.pieton-sens-inverse { background-color: darkorange; width: 35px; height: 35px; border-radius: 50%; }
-.obstacle.poubelle { background-color: #444; width: 40px; height: 50px; border-radius: 5px;}
-.obstacle.egout { background-color: #666; width: 45px; height: 15px; border-radius: 3px;}
+/* Quand le sprite est chargé, on cache le placeholder */
+.obstacle.sprite-loaded {
+    background-color: transparent;
+    border: none;
+  }
+
+/* Image servant de sprite (pleine hit-box) */
+.obstacle-sprite {
+    position: absolute;
+    inset: 0;               /* top/right/bottom/left = 0 */
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    image-rendering: pixelated; /* net pour petits sprites */
+  }
 
 
 /* Zones de Contrôle Tactile (SUPPRIMÉES) */

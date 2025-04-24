@@ -10,8 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const playableArea = document.getElementById('playable-area'); // La zone 75% du bas
     const player = document.getElementById('player');
     const obstaclesContainer = document.getElementById('obstacles-container'); // Est dans playableArea
-    // SUPPRIMÉ : const controlLeft = document.getElementById('control-left');
-    // SUPPRIMÉ : const controlRight = document.getElementById('control-right');
     const startScreen = document.getElementById('start-screen');
     const startButton = document.getElementById('start-button');
     const gameOverScreen = document.getElementById('game-over-screen');
@@ -20,10 +18,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Configuration du Jeu ---
     const TOTAL_GAME_DISTANCE = 15000;
-    const LANES = [15, 50, 85];
+    const LANES = [15, 32.5, 50, 67.5, 85];
     const ROAD_POSITIONS_HORIZONTAL = [50, 75, 90];
     const GLOBAL_SCALE = 1.3;
-    const GLOBAL_OBSTACLE_DENSITY_FACTOR = 0.5;
+    const GLOBAL_OBSTACLE_DENSITY_FACTOR = 1;
     const INITIAL_START_SPEED = 10;
     const GLOBAL_DISTANCE_FACTOR = 0.8;
 
@@ -31,49 +29,70 @@ document.addEventListener('DOMContentLoaded', () => {
         {
             name: "Natation", distanceThreshold: 1300, baseSpeed: 100,
             minSpeedFactor: 0.05, maxSpeedFactor: 2,
-            backgroundStyle: 'linear-gradient(to bottom, #87CEEB, #4682B4)',
-            playableAreaStyle: '#black', obstacleTypes: ['peniche', 'dechet'],
+            backgroundStyle: 'linear-gradient(to bottom, #87CEEB, #4682B4)', //à remplacer par : backgroundStyle: 'bg_swim.png',
+            playableAreaStyle: '#black', //à remplacer par : playableAreaStyle: 'ground_swim.png',
+            obstacleTypes: ['peniche', 'dechet'], 
             baseObstacleFrequency: 2000
         },
         {
-            name: "Vélo", distanceThreshold: 11500, baseSpeed: 200,
+            name: "Vélo", distanceThreshold: 11500, baseSpeed: 100,
             minSpeedFactor: 0.1, maxSpeedFactor: 5,
-            backgroundStyle: 'linear-gradient(to bottom, #87CEEB, #A9A9A9)',
-            playableAreaStyle: '#666', obstacleTypes: ['voiture', 'egout', 'poubelle', 'voiture-statique', 'voiture-verticale'],
+            backgroundStyle: 'linear-gradient(to bottom, #87CEEB, #A9A9A9)', // backgroundStyle: 'bg_bike.png',
+            playableAreaStyle: '#666', // playableAreaStyle: 'ground_bike.png'
+            obstacleTypes: ['voiture', 'egout', 'poubelle', 'voiture-statique', 'voiture-verticale'],
             baseObstacleFrequency: 2200
         },
         {
             name: "Course", distanceThreshold: TOTAL_GAME_DISTANCE, baseSpeed: 100,
             minSpeedFactor: 0.1, maxSpeedFactor: 3,
-            backgroundStyle: 'linear-gradient(to bottom, #87CEEB, #7CFC00)',
-            playableAreaStyle: '#aaa', obstacleTypes: ['pieton', 'egout', 'poubelle', 'voiture', 'pieton-sens-inverse', 'voiture-statique', 'voiture-verticale', 'pieton-verticale'],
+            backgroundStyle: 'linear-gradient(to bottom, #87CEEB, #7CFC00)', // backgroundStyle: 'bg_run.png',
+            playableAreaStyle: '#aaa', //playableAreaStyle: 'ground_run.png',
+            obstacleTypes: ['pieton', 'egout', 'poubelle', 'voiture', 'pieton-sens-inverse', 'voiture-statique', 'voiture-verticale', 'pieton-verticale'],
             baseObstacleFrequency: 1700
         }
     ];
 
-    const OBSTACLE_CONFIG = {
-        'peniche': { className: 'peniche', width: 150, height: 55, speedFactor: 1.0, isVertical: false },
-        'dechet': { className: 'dechet', width: 30, height: 30, speedFactor: 1.0, isVertical: false },
-        'voiture': { className: 'voiture', width: 45, height: 80, speedFactor: 1.0, isVertical: false },
-        'voiture-statique': { className: 'voiture-statique', width: 85, height: 45, speedFactor: 1.0, isVertical: false },
-        'pieton': { className: 'pieton', width: 35, height: 35, speedFactor: 1.0, isVertical: false },
-        'pieton-sens-inverse': { className: 'pieton-sens-inverse', width: 35, height: 35, speedFactor: 1.5, isVertical: false },
-        'poubelle': { className: 'poubelle', width: 40, height: 50, speedFactor: 1.0, isVertical: false },
-        'egout': { className: 'egout', width: 45, height: 15, speedFactor: 1.0, isVertical: false },
-        'voiture-verticale': { className: 'voiture-verticale', width: 45, height: 85, verticalSpeed: 250, speedFactor: 1.0, isVertical: true },
-        'pieton-verticale': { className: 'pieton', width: 35, height: 35, verticalSpeed: 50, speedFactor: 1.0, isVertical: true },
-     };
 
-     const SPRITES = {
+     /* ---- ajoute AVANT OBSTACLE_CONFIG ---- */
+    const OBSTACLE_SPRITES = {
+        'peniche'            : 'peniche.png',
+        'dechet'             : 'dechet.png',
+        'voiture'            : 'voiture.png',
+        'voiture-statique'   : 'voiture_statique.png',
+        'pieton'             : 'pieton.png',
+        'pieton-sens-inverse': 'pieton_inverse.png',
+        'poubelle'           : 'poubelle.png',
+        'egout'              : 'egout.png',
+        'voiture-verticale'  : 'voiture_verticale.png',
+        'pieton-verticale'   : 'pieton_verticale.png'
+    };
+
+    const OBSTACLE_CONFIG = {
+        'peniche': { className: 'peniche', width: 200, height: 75, speedFactor: 1.0, isVertical: false },
+        'dechet': { className: 'dechet', width: 30, height: 30, speedFactor: 1.0, isVertical: false },
+        'voiture': { className: 'voiture', width: 100, height: 50, speedFactor: 1.0, isVertical: false },
+        'voiture-statique': { className: 'voiture-statique', width: 95, height: 45, speedFactor: 1.0, isVertical: false },
+        'pieton': { className: 'pieton', width: 45, height: 45, speedFactor: 1.0, isVertical: false },
+        'pieton-sens-inverse': { className: 'pieton-sens-inverse', width: 45, height: 43, speedFactor: 1.0, isVertical: false },
+        'poubelle': { className: 'poubelle', width: 60, height: 50, speedFactor: 1.0, isVertical: false },
+        'egout': { className: 'egout', width: 33, height: 33, speedFactor: 1.0, isVertical: false },
+        'voiture-verticale': { className: 'voiture-verticale', width: 70, height: 80, verticalSpeed: 250, speedFactor: 1.0, isVertical: true },
+        'pieton-verticale': { className: 'pieton', width: 20, height: 42, verticalSpeed: 50, speedFactor: 1.0, isVertical: true },
+    };
+
+    const SPRITES = {
         swim : ['player_swim_0.png','player_swim_1.png'],
         bike : ['player_bike_0.png','player_bike_1.png'],
         run  : ['player_run_0.png' ,'player_run_1.png', 'player_run_2.png' ,'player_run_3.png']
     };
-    const FRAME_DURATION = 150; // ms
+
+    const BASE_FRAME_DURATION = 250; // durée (ms) quand on roule à la vitesse de base
+    const MIN_FRAME_DURATION  = 70;  // limite basse pour ne pas aller trop vite
+    let frameTimer = 0;              // accumulateur interne
+
     let currentPhase = 'swim';
     let frameIndex   = 0;
     let spritesReady = false;
-    let animTimer    = null;
     
     const playerDiv   = document.getElementById('player');
     const spriteImgEl = document.getElementById('player-sprite');
@@ -85,21 +104,34 @@ document.addEventListener('DOMContentLoaded', () => {
         img.onerror = () => ko(src);
         img.src = `./sprites/${src}`;
     });
+
+
+    // 1) Construire la liste des fichiers à charger
+    const toPreload = [
+    ...Object.values(SPRITES).flat(),              // joueur
+    ...Object.values(OBSTACLE_SPRITES),            // obstacles
+    ...PHASES.flatMap(p => [p.backgroundStyle, p.playableAreaStyle]) // décors
+    ];
+  
+    // 2) Ensemble pour suivre les échecs
+    const failedSprites = new Set();
+    
+    // 3) Préchargement sans abort
     Promise.allSettled(
-        Object.values(SPRITES).flat().map(preload)
-    ).then(results=>{
-        const failed = results.filter(r=>r.status==='rejected');
-        if(failed.length){
-            console.warn('Sprites manquants :', failed.map(f=>f.reason));
-            return;                // fallback ⇒ les formes restent visibles
-        }
-        // tout est OK
+        toPreload.map(src =>
+        preload(src)
+            .catch(() => {
+            console.warn(`Sprite manquant : ${src}`);
+            failedSprites.add(src);
+            })
+        )
+    ).then(()=>{
+        // même si certain·e·s ont échoué, on continue
         spritesReady = true;
         playerDiv.classList.add('sprite-loaded');
         spriteImgEl.style.display = 'block';
         startSpriteAnimation();
     });
-    
 
 
     // --- État du Jeu ---
@@ -107,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPhaseIndex = 0;
     let distanceCovered = 0;
     let gameTime = 0;
-    let playerLane = 1;
+    let playerLane = 2;
     let currentSpeed = 0;
     let targetSpeed = 0;
     let minSpeed = 0;
@@ -158,9 +190,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startSpriteAnimation(){
-        updateFrame(); // affiche la 1ʳᵉ image
-        animTimer = setInterval(updateFrame, FRAME_DURATION);
+        frameIndex = 0;
+        updateFrame();               // on montre simplement la 1ʳᵉ image
+        frameTimer = 0;              // reset du compteur
     }
+    function updateSpriteAnimation(deltaTime){
+        // On accumule le temps écoulé (en millisecondes)
+        frameTimer += deltaTime * 1000;
+    
+        // Vitesse relative par rapport à la vitesse « de base » de la phase
+        const baseSpeed   = PHASES[currentPhaseIndex].baseSpeed || 1;
+        const speedFactor = currentSpeed / baseSpeed;
+    
+        /*  Durée cible de la frame :
+            - si speedFactor < 1 : on garde BASE_FRAME_DURATION
+            - si speedFactor ≥ 1 : on divise proportionnellement (plus on va vite, plus c’est court)
+            - on ne descend jamais en-dessous de MIN_FRAME_DURATION
+        */
+        const frameDuration =
+            Math.max(MIN_FRAME_DURATION, BASE_FRAME_DURATION / Math.max(1, speedFactor));
+    
+        // As-t-on atteint/passe la durée cible ?
+        if (frameTimer >= frameDuration){
+            frameTimer = 0;
+            frameIndex = (frameIndex + 1) % SPRITES[currentPhase].length;
+            spriteImgEl.src = `./sprites/${SPRITES[currentPhase][frameIndex]}`;
+        }
+    }
+
+
     function updateFrame(){
         spriteImgEl.src = `./sprites/${SPRITES[currentPhase][frameIndex]}`;
         frameIndex = (frameIndex + 1) % SPRITES[currentPhase].length;
@@ -284,6 +342,17 @@ document.addEventListener('DOMContentLoaded', () => {
             initialY += (Math.random() - 0.5) * 10;
         }
 
+        // Injection du sprite (seule cette ligne change ici)
+        const spriteFile = OBSTACLE_SPRITES[type];
+        if (spriteFile) {
+        const img = new Image();
+        img.src = `./sprites/${spriteFile}`;
+        img.classList.add('obstacle-sprite');
+        img.onload  = () => obstacleElement.classList.add('sprite-loaded');
+        img.onerror = () => console.warn(`Sprite obstacle manquant : ${spriteFile}`);
+        obstacleElement.appendChild(img);
+        }
+
         obstacleElement.style.left = `${initialX}px`;
         obstacleElement.style.top = `${initialY}px`; // Use top for positioning
 
@@ -383,6 +452,8 @@ document.addEventListener('DOMContentLoaded', () => {
             currentSpeed = Math.max(targetSpeed, currentSpeed - deceleration * deltaTime);
         }
         currentSpeed = Math.max(minSpeed, Math.min(maxSpeed, currentSpeed));
+        // 1 bis. Animation du sprite (dépend de la vitesse)
+        updateSpriteAnimation(deltaTime);
 
         // 2. Distance
         const basePhase = PHASES[currentPhaseIndex];
@@ -488,16 +559,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fonctions pour les actions (inchangées)
     function handleSpeedUp() {
         if (gameState !== 'running') return;
-        const increment = Math.max(5, targetSpeed * 0.1);
-        targetSpeed = Math.min(maxSpeed, targetSpeed + increment);
-         // console.log("Speed Up - Target Speed:", targetSpeed.toFixed(1));
+
+        // facteur k tel que k^5 = maxSpeed / initialSpeed
+        const k = Math.pow(maxSpeed / INITIAL_START_SPEED, 1 / 4);
+      
+        // on multiplie la cible par k, bornée par maxSpeed
+        targetSpeed = Math.min(maxSpeed, targetSpeed * k);
     }
 
     function handleSlowDown() {
         if (gameState !== 'running') return;
-        const decrement = Math.max(5, targetSpeed * 0.3);
-        targetSpeed = Math.max(minSpeed, targetSpeed - decrement);
-         // console.log("Slow Down - Target Speed:", targetSpeed.toFixed(1));
+      
+        // facteur d tel que d² = minSpeed / maxSpeed
+        const d = Math.pow(minSpeed / maxSpeed, 1 / 2);
+      
+        // on applique ce facteur à la cible, bornée par minSpeed
+        targetSpeed = Math.max(minSpeed, targetSpeed * d);
     }
 
     function handleChangeLane(direction) {
@@ -517,7 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchStartX = 0;
     let touchStartY = 0;
     let isSwiping = false;
-    const swipeThreshold = 20; // Pixels minimum pour détecter un swipe (un peu augmenté pour éviter déclenchement accidentel)
+    const swipeThreshold = 30; // Pixels minimum pour détecter un swipe (un peu augmenté pour éviter déclenchement accidentel)
 
     // SUPPRIMÉ : Event listeners pour controlLeft et controlRight
 
