@@ -17,6 +17,7 @@ html, body {
     height: 100%;
     overflow: hidden; /* Empêche le défilement de la page principale */
     background-color: #f0f0f0;
+    
 }
 
 #game-container {
@@ -31,6 +32,7 @@ html, body {
 /* Important: Permettre les actions tactiles sur la zone jouable */
 #game-container, #playable-area {
     touch-action: none; /* Empêche le comportement par défaut du navigateur (zoom, scroll) sur le toucher */
+    background-repeat: repeat-x;    
 }
 
 /* Interface Utilisateur */
@@ -145,7 +147,6 @@ html, body {
     pointer-events: none;
     image-rendering: pixelated; /* net pour petits sprites */
   }
-
 
 /* Zones de Contrôle Tactile (SUPPRIMÉES) */
 /* Les règles pour #controls, #control-left, #control-right ont été supprimées */

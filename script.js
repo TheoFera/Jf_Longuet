@@ -18,35 +18,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Configuration du Jeu ---
     const TOTAL_GAME_DISTANCE = 15000;
-    const LANES = [15, 32.5, 50, 67.5, 85];
+    const LANES = [15, 38.3, 61.63, 85];
     const ROAD_POSITIONS_HORIZONTAL = [60, 77,5, 95];
     const GLOBAL_SCALE = 1.3;
     const GLOBAL_OBSTACLE_DENSITY_FACTOR = 1;
     const INITIAL_START_SPEED = 10;
     const GLOBAL_DISTANCE_FACTOR = 0.8;
+    const PLAYABLE_BG_SCROLL_SPEED = 20;
 
     const PHASES = [
         {
             name: "Natation", distanceThreshold: 1300, baseSpeed: 100,
             minSpeedFactor: 0.05, maxSpeedFactor: 2,
-            backgroundStyle: 'linear-gradient(to bottom, #87CEEB, #4682B4)', //à remplacer par : backgroundStyle: 'bg_swim.png',
-            playableAreaStyle: '#black', //à remplacer par : playableAreaStyle: 'ground_swim.png',
+            backgroundStyle: './sprites/bg_swim.png', // à remplacer par 'linear-gradient(to bottom, #87CEEB, #4682B4)', //
+            playableAreaStyle: './sprites/ground_swim.png', //à remplacer par : playableAreaStyle: 'ground_swim.png',
             obstacleTypes: ['peniche', 'dechet'], 
-            baseObstacleFrequency: 2000
+            baseObstacleFrequency: 1800
         },
         {
             name: "Vélo", distanceThreshold: 11500, baseSpeed: 100,
-            minSpeedFactor: 0.1, maxSpeedFactor: 3,
-            backgroundStyle: 'linear-gradient(to bottom, #87CEEB, #A9A9A9)', // backgroundStyle: 'bg_bike.png',
-            playableAreaStyle: '#666', // playableAreaStyle: 'ground_bike.png'
+            minSpeedFactor: 0.1, maxSpeedFactor: 3.2,
+            backgroundStyle: './sprites/bg_bike.png', //'linear-gradient(to bottom, #87CEEB, #A9A9A9)', 
+            playableAreaStyle: './sprites/ground_bike.png', // playableAreaStyle: 'ground_bike.png'
             obstacleTypes: ['voiture', 'egout', 'poubelle', 'voiture-statique', 'voiture-verticale'],
-            baseObstacleFrequency: 2200
+            baseObstacleFrequency: 2000
         },
         {
             name: "Course", distanceThreshold: TOTAL_GAME_DISTANCE, baseSpeed: 100,
             minSpeedFactor: 0.1, maxSpeedFactor: 2.5,
-            backgroundStyle: 'linear-gradient(to bottom, #87CEEB, #7CFC00)', // backgroundStyle: 'bg_run.png',
-            playableAreaStyle: '#aaa', //playableAreaStyle: 'ground_run.png',
+            backgroundStyle: './sprites/bg_bike.png', // 'linear-gradient(to bottom, #87CEEB, #7CFC00)',
+            playableAreaStyle: './sprites/ground_bike.png', //playableAreaStyle: 'ground_run.png',
             obstacleTypes: ['pieton', 'egout', 'poubelle', 'voiture', 'pieton-sens-inverse', 'voiture-statique', 'voiture-verticale', 'pieton-verticale'],
             baseObstacleFrequency: 2000
         }
@@ -121,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
         toPreload.map(src =>
         preload(src)
             .catch(() => {
-            console.warn(`Sprite manquant : ${src}`);
+            //console.warn(`Sprite manquant : ${src}`);
             failedSprites.add(src);
             })
         )
@@ -430,14 +431,22 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateBackground(deltaTime) {
         const backgroundWidth = background.offsetWidth / 2;
         backgroundOffset -= currentSpeed * deltaTime * 0.5;
-        background.style.backgroundPositionX = `${backgroundOffset % backgroundWidth}px`;
+        background.style.backgroundPositionX = `${backgroundOffset}px`;
+        
 
-        if (playableArea.style.backgroundImage && playableArea.style.backgroundImage !== 'none') {
+        /*if (playableArea.style.backgroundImage && playableArea.style.backgroundImage !== 'none') {
              const playableAreaRepetitionWidth = playableArea.offsetWidth; // Assumes repeat-x and covers full width
              playableAreaOffset -= currentSpeed * deltaTime * 1.0;
              playableArea.style.backgroundPositionX = `${playableAreaOffset % playableAreaRepetitionWidth}px`;
-        }
+        }*/
+
+        // on fait toujours défiler le sol, lentement, quelle que soit la vitesse du joueur
+        // Calque « playable-area » (sol) — défilement constant
+        // sol/jouable : on incrémente ou décrémente sans modulo
+        playableAreaOffset -= PLAYABLE_BG_SCROLL_SPEED * deltaTime;
+        playableArea.style.backgroundPositionX = `${backgroundOffset}px`;
     }
+
 
     function gameLoop(timestamp) {
         if (gameState !== 'running') return;
