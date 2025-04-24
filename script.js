@@ -18,10 +18,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Configuration du Jeu ---
     const TOTAL_GAME_DISTANCE = 15000;
-    const LANES = [15, 38.3, 61.63, 85];
+    const LANES = [15, 32.5, 50,  67.5, 85];
     const ROAD_POSITIONS_HORIZONTAL = [60, 77,5, 95];
     const GLOBAL_SCALE = 1.3;
-    const GLOBAL_OBSTACLE_DENSITY_FACTOR = 1;
+    const GLOBAL_OBSTACLE_DENSITY_FACTOR = 0.8;
     const INITIAL_START_SPEED = 10;
     const GLOBAL_DISTANCE_FACTOR = 0.8;
     const PLAYABLE_BG_SCROLL_SPEED = 20;
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
         {
             name: "Course", distanceThreshold: TOTAL_GAME_DISTANCE, baseSpeed: 100,
             minSpeedFactor: 0.1, maxSpeedFactor: 2.5,
-            backgroundStyle: './sprites/bg_bike.png', // 'linear-gradient(to bottom, #87CEEB, #7CFC00)',
+            backgroundStyle: './sprites/bg_run.png', // 'linear-gradient(to bottom, #87CEEB, #7CFC00)',
             playableAreaStyle: './sprites/ground_bike.png', //playableAreaStyle: 'ground_run.png',
             obstacleTypes: ['pieton', 'egout', 'poubelle', 'voiture', 'pieton-sens-inverse', 'voiture-statique', 'voiture-verticale', 'pieton-verticale'],
             baseObstacleFrequency: 2000
@@ -77,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'pieton-sens-inverse': { className: 'pieton-sens-inverse', width: 45, height: 43, speedFactor: 1.0, isVertical: false },
         'poubelle': { className: 'poubelle', width: 60, height: 50, speedFactor: 1.0, isVertical: false },
         'egout': { className: 'egout', width: 33, height: 33, speedFactor: 1.0, isVertical: false },
+        
         'voiture-verticale': { className: 'voiture-verticale', width: 70, height: 80, verticalSpeed: 250, speedFactor: 1.0, isVertical: true },
         'pieton-verticale': { className: 'pieton', width: 20, height: 42, verticalSpeed: 50, speedFactor: 1.0, isVertical: true },
     };
