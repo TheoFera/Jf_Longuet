@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Configuration du Jeu ---
     const TOTAL_GAME_DISTANCE = 15000;
     const LANES = [15, 32.5, 50, 67.5, 85];
-    const ROAD_POSITIONS_HORIZONTAL = [50, 75, 90];
+    const ROAD_POSITIONS_HORIZONTAL = [60, 77,5, 95];
     const GLOBAL_SCALE = 1.3;
     const GLOBAL_OBSTACLE_DENSITY_FACTOR = 1;
     const INITIAL_START_SPEED = 10;
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         {
             name: "Vélo", distanceThreshold: 11500, baseSpeed: 100,
-            minSpeedFactor: 0.1, maxSpeedFactor: 5,
+            minSpeedFactor: 0.1, maxSpeedFactor: 3,
             backgroundStyle: 'linear-gradient(to bottom, #87CEEB, #A9A9A9)', // backgroundStyle: 'bg_bike.png',
             playableAreaStyle: '#666', // playableAreaStyle: 'ground_bike.png'
             obstacleTypes: ['voiture', 'egout', 'poubelle', 'voiture-statique', 'voiture-verticale'],
@@ -44,11 +44,11 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         {
             name: "Course", distanceThreshold: TOTAL_GAME_DISTANCE, baseSpeed: 100,
-            minSpeedFactor: 0.1, maxSpeedFactor: 3,
+            minSpeedFactor: 0.1, maxSpeedFactor: 2.5,
             backgroundStyle: 'linear-gradient(to bottom, #87CEEB, #7CFC00)', // backgroundStyle: 'bg_run.png',
             playableAreaStyle: '#aaa', //playableAreaStyle: 'ground_run.png',
             obstacleTypes: ['pieton', 'egout', 'poubelle', 'voiture', 'pieton-sens-inverse', 'voiture-statique', 'voiture-verticale', 'pieton-verticale'],
-            baseObstacleFrequency: 1700
+            baseObstacleFrequency: 2000
         }
     ];
 
@@ -248,6 +248,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setPhase(phaseIndex) {
+
+
         // 1) Logique de phase existante
         currentPhaseIndex = phaseIndex;
         const phase = PHASES[phaseIndex];
