@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameOverScreen = document.getElementById('game-over-screen');
     const finalTimeDisplay = document.getElementById('final-time');
     const restartButton = document.getElementById('restart-button');
+    const bgMusic = document.getElementById('bg-music');
 
     // --- Configuration du Jeu ---
     const TOTAL_GAME_DISTANCE = 15000;
@@ -73,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const OBSTACLE_CONFIG = {
-        'peniche': { className: 'peniche', width: 200, height: 75, speedFactor: 1.0},
+        'peniche': { className: 'peniche', width: 200, height: 75, speedFactor: 1.0, allowedLanes:[0,2,4]},
         'dechet': { className: 'dechet', width: 30, height: 30, speedFactor: 1.0},
         'voiture': { className: 'voiture', width: 100, height: 50, speedFactor: 1.0, allowedLanes:[1,2,3,4]},
         'voiture-statique': { className: 'voiture-statique', width: 95, height: 45, speedFactor: 1.0, allowedLanes:[1,2,3,4]},
@@ -156,6 +157,22 @@ document.addEventListener('DOMContentLoaded', () => {
         img.src = resolveSpritePath(src);
     });
 
+     // ── ③ Helper pour lancer la musique et gérer l’autoplay bloqué ──
+    function tryPlayMusic() {
+      if (!bgMusic) return;
+      bgMusic.volume = 0.6;
+      const playPromise = bgMusic.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          const unlock = () => {
+            bgMusic.play().catch(console.warn);
+            document.removeEventListener('pointerdown', unlock);
+          };
+          document.addEventListener('pointerdown', unlock, { once: true });
+        });
+      }
+    }
+
     // 3) Préchargement sans abort
     Promise.allSettled(
         toPreload.map(src =>
@@ -180,6 +197,9 @@ document.addEventListener('DOMContentLoaded', () => {
         loadingScreen.style.display = "none";
         startScreen.style.display   = "flex";
         startButton.disabled        = false;
+
+        // ── ④ Démarrage de la musique après chargement ──
+        tryPlayMusic();
     
         // On peut lancer l’initialisation UI maintenant
         initializeApp();            // <-- était appelé avant : déplacez-le ici
@@ -341,8 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2) Hit-box et UI
         movePlayerToLane(playerLane);
         updateUI();
-        /*
-        console.log(`Phase changed to: ${phase.name}`);
+        /*console.log(`Phase changed to: ${phase.name}`);
         console.log(`Speed range: ${minSpeed.toFixed(1)} - ${maxSpeed.toFixed(1)} px/s (base: ${phase.baseSpeed.toFixed(1)})`);*/
     
         // ─────── NOUVEAU : Animation de sprite ───────
@@ -394,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const laneBottomPercent = LANES[laneIndex];
         // Calculate top based on lane bottom % and obstacle height
         initialY = playableAreaHeight * (1 - (laneBottomPercent / 100)) - h / 2;
-        initialY += (Math.random() - 0.5) * 10;
+        initialY += (Math.random() - 0.5) * 20;
 
         // Injection du sprite (seule cette ligne change ici)
         const spriteFile = OBSTACLE_SPRITES[type];
@@ -593,13 +612,13 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelAnimationFrame(gameLoopId);
         gameLoopId = requestAnimationFrame(gameLoop);
 
-        console.log("Game Started! Swipe left/right for speed, up/down for lanes."); // Message modifié
-        console.log(`Initial Speed: ${currentSpeed.toFixed(1)} px/s. Min Speed: ${minSpeed.toFixed(1)} px/s. Max Speed: ${maxSpeed.toFixed(1)} px/s.`);
+        //console.log("Game Started! Swipe left/right for speed, up/down for lanes."); // Message modifié
+        //console.log(`Initial Speed: ${currentSpeed.toFixed(1)} px/s. Min Speed: ${minSpeed.toFixed(1)} px/s. Max Speed: ${maxSpeed.toFixed(1)} px/s.`);
     }
 
     function gameOver() {
         if (gameState === 'gameOver') return;
-        console.log("Game Over!");
+        //console.log("Game Over!");
         gameState = 'gameOver';
         clearInterval(timerInterval);
         cancelAnimationFrame(gameLoopId);
@@ -619,7 +638,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function gameWon() {
         // ... (Fonction gameWon reste identique) ...
         if (gameState === 'gameOver') return;
-        console.log("You Win!");
+        //console.log("You Win!");
         gameState = 'gameOver';
         clearInterval(timerInterval);
         cancelAnimationFrame(gameLoopId);
