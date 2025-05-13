@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Configuration du Jeu ---
     const TOTAL_GAME_DISTANCE = 15000;
     const LANES = [15, 32.5, 50,  67.5, 85];
-    const ROAD_POSITIONS_HORIZONTAL = [60, 77.5, 95];
+    //const ROAD_POSITIONS_HORIZONTAL = [60, 77.5, 95];
     const GLOBAL_SCALE = 1.3;
     const GLOBAL_OBSTACLE_DENSITY_FACTOR = 0.8;
     const INITIAL_START_SPEED = 10;
