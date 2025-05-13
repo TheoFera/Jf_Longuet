@@ -10,8 +10,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const playableArea = document.getElementById('playable-area'); // La zone 75% du bas
     const player = document.getElementById('player');
     const obstaclesContainer = document.getElementById('obstacles-container'); // Est dans playableArea
-    const startScreen = document.getElementById('start-screen');
-    const startButton = document.getElementById('start-button');
+    /* APRÈS */
+    const loadingScreen      = document.getElementById('loading-screen');
+    const loadingPercentage  = document.getElementById('loading-percentage');
+    const loadingBarFill     = document.getElementById('loading-bar-fill');
+    const startScreen        = document.getElementById('start-screen');
+    const startButton        = document.getElementById('start-button');
+    let   resourcesReady     = false;
+    startButton.disabled = true;        // on désactive tant que ce n’est pas pré-chargé
     const gameOverScreen = document.getElementById('game-over-screen');
     const finalTimeDisplay = document.getElementById('final-time');
     const restartButton = document.getElementById('restart-button');
@@ -19,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Configuration du Jeu ---
     const TOTAL_GAME_DISTANCE = 15000;
     const LANES = [15, 32.5, 50,  67.5, 85];
-    const ROAD_POSITIONS_HORIZONTAL = [60, 77,5, 95];
+    const ROAD_POSITIONS_HORIZONTAL = [60, 77.5, 95];
     const GLOBAL_SCALE = 1.3;
     const GLOBAL_OBSTACLE_DENSITY_FACTOR = 0.8;
     const INITIAL_START_SPEED = 10;
@@ -30,25 +36,25 @@ document.addEventListener('DOMContentLoaded', () => {
         {
             name: "Natation", distanceThreshold: 1300, baseSpeed: 100,
             minSpeedFactor: 0.05, maxSpeedFactor: 2,
-            backgroundStyle: './sprites/bg_swim.png', // à remplacer par 'linear-gradient(to bottom, #87CEEB, #4682B4)', //
-            playableAreaStyle: './sprites/ground_swim.png', //à remplacer par : playableAreaStyle: 'ground_swim.png',
+            backgroundStyle: 'bg_swim.png', // à remplacer par 'linear-gradient(to bottom, #87CEEB, #4682B4)', //
+            playableAreaStyle: 'ground_swim.png', //à remplacer par : playableAreaStyle: 'ground_swim.png',
             obstacleTypes: ['peniche', 'dechet'], 
             baseObstacleFrequency: 1800
         },
         {
             name: "Vélo", distanceThreshold: 11500, baseSpeed: 100,
             minSpeedFactor: 0.1, maxSpeedFactor: 3.2,
-            backgroundStyle: './sprites/bg_bike.png', //'linear-gradient(to bottom, #87CEEB, #A9A9A9)', 
-            playableAreaStyle: './sprites/ground_bike.png', // playableAreaStyle: 'ground_bike.png'
-            obstacleTypes: ['voiture', 'egout', 'poubelle', 'voiture-statique', 'voiture-verticale'],
+            backgroundStyle: 'bg_bike.png', //'linear-gradient(to bottom, #87CEEB, #A9A9A9)', 
+            playableAreaStyle: 'ground_bike.png', // playableAreaStyle: 'ground_bike.png'
+            obstacleTypes: ['voiture', 'egout', 'poubelle', 'voiture-statique'],
             baseObstacleFrequency: 2000
         },
         {
             name: "Course", distanceThreshold: TOTAL_GAME_DISTANCE, baseSpeed: 100,
             minSpeedFactor: 0.1, maxSpeedFactor: 2.5,
-            backgroundStyle: './sprites/bg_run.png', // 'linear-gradient(to bottom, #87CEEB, #7CFC00)',
-            playableAreaStyle: './sprites/ground_bike.png', //playableAreaStyle: 'ground_run.png',
-            obstacleTypes: ['pieton', 'egout', 'poubelle', 'voiture', 'pieton-sens-inverse', 'voiture-statique', 'voiture-verticale', 'pieton-verticale'],
+            backgroundStyle: 'bg_run.png', // 'linear-gradient(to bottom, #87CEEB, #7CFC00)',
+            playableAreaStyle: 'ground_bike.png', //playableAreaStyle: 'ground_run.png',
+            obstacleTypes: ['pieton', 'egout', 'poubelle', 'voiture', 'pieton-sens-inverse', 'voiture-statique'],
             baseObstacleFrequency: 2000
         }
     ];
@@ -64,22 +70,17 @@ document.addEventListener('DOMContentLoaded', () => {
         'pieton-sens-inverse': 'pieton_inverse.png',
         'poubelle'           : 'poubelle.png',
         'egout'              : 'egout.png',
-        'voiture-verticale'  : 'voiture_verticale.png',
-        'pieton-verticale'   : 'pieton_verticale.png'
     };
 
     const OBSTACLE_CONFIG = {
-        'peniche': { className: 'peniche', width: 200, height: 75, speedFactor: 1.0, isVertical: false },
-        'dechet': { className: 'dechet', width: 30, height: 30, speedFactor: 1.0, isVertical: false },
-        'voiture': { className: 'voiture', width: 100, height: 50, speedFactor: 1.0, isVertical: false },
-        'voiture-statique': { className: 'voiture-statique', width: 95, height: 45, speedFactor: 1.0, isVertical: false },
-        'pieton': { className: 'pieton', width: 45, height: 45, speedFactor: 1.0, isVertical: false },
-        'pieton-sens-inverse': { className: 'pieton-sens-inverse', width: 45, height: 43, speedFactor: 1.0, isVertical: false },
-        'poubelle': { className: 'poubelle', width: 60, height: 50, speedFactor: 1.0, isVertical: false },
-        'egout': { className: 'egout', width: 33, height: 33, speedFactor: 1.0, isVertical: false },
-        
-        'voiture-verticale': { className: 'voiture-verticale', width: 70, height: 80, verticalSpeed: 250, speedFactor: 1.0, isVertical: true },
-        'pieton-verticale': { className: 'pieton', width: 20, height: 42, verticalSpeed: 50, speedFactor: 1.0, isVertical: true },
+        'peniche': { className: 'peniche', width: 200, height: 75, speedFactor: 1.0},
+        'dechet': { className: 'dechet', width: 30, height: 30, speedFactor: 1.0},
+        'voiture': { className: 'voiture', width: 100, height: 50, speedFactor: 1.0, allowedLanes:[1,2,3,4]},
+        'voiture-statique': { className: 'voiture-statique', width: 95, height: 45, speedFactor: 1.0, allowedLanes:[1,2,3,4]},
+        'pieton': { className: 'pieton', width: 45, height: 45, speedFactor: 1.0, allowedLanes:[0]},
+        'pieton-sens-inverse': { className: 'pieton-sens-inverse', width: 45, height: 43, speedFactor: 1.0, allowedLanes:[0]},
+        'poubelle': { className: 'poubelle', width: 60, height: 50, speedFactor: 1.0, allowedLanes:[0]},
+        'egout': { className: 'egout', width: 33, height: 33, speedFactor: 1.0},
     };
 
     const SPRITES = {
@@ -95,18 +96,44 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPhase = 'swim';
     let frameIndex   = 0;
     let spritesReady = false;
+
+    let isTransitioning = false;
+
+    function changePhase(nextIndex){
+    if (isTransitioning) return;        // anti double-clic
+    isTransitioning = true;
+
+    gameArea.classList.add('fade-out');
+
+    const onFadeOutEnd = (e)=>{
+        if (e.propertyName !== 'opacity') return; // on ne veut que l’opacité
+        gameArea.removeEventListener('transitionend', onFadeOutEnd);
+
+        setPhase(nextIndex);               // décor changé quand écran noir
+
+        gameArea.classList.remove('fade-out');
+        gameArea.classList.add('fade-in');
+
+        const onFadeInEnd = (ev)=>{
+        if (ev.propertyName !== 'opacity') return;
+        gameArea.removeEventListener('transitionend', onFadeInEnd);
+        gameArea.classList.remove('fade-in');
+        isTransitioning = false;        // prêt pour la transition suivante
+        };
+        gameArea.addEventListener('transitionend', onFadeInEnd);
+    };
+
+    gameArea.addEventListener('transitionend', onFadeOutEnd);
+    }
     
     const playerDiv   = document.getElementById('player');
     const spriteImgEl = document.getElementById('player-sprite');
-    
-    // 2) Pré-chargement + fallback
-    const preload = src => new Promise((ok,ko)=>{
-        const img = new Image();
-        img.onload = () => ok();
-        img.onerror = () => ko(src);
-        img.src = `./sprites/${src}`;
-    });
 
+    // Placez ce helper en haut de votre script, juste avant la logique de pré‑chargement :
+    const resolveSpritePath = src =>
+        src.startsWith('./') || src.startsWith('../') || src.startsWith('http')
+            ? src
+            : `./sprites/${src}`; 
 
     // 1) Construire la liste des fichiers à charger
     const toPreload = [
@@ -114,27 +141,50 @@ document.addEventListener('DOMContentLoaded', () => {
     ...Object.values(OBSTACLE_SPRITES),            // obstacles
     ...PHASES.flatMap(p => [p.backgroundStyle, p.playableAreaStyle]) // décors
     ];
+
+    let loadedCount  = 0;
+    const totalCount = toPreload.length;
   
     // 2) Ensemble pour suivre les échecs
     const failedSprites = new Set();
     
+    // 2) Pré-chargement + fallback
+    const preload = src => new Promise((ok,ko)=>{
+        const img = new Image();
+        img.onload = () => ok();
+        img.onerror = () => ko(src);
+        img.src = resolveSpritePath(src);
+    });
+
     // 3) Préchargement sans abort
     Promise.allSettled(
         toPreload.map(src =>
-        preload(src)
-            .catch(() => {
-            //console.warn(`Sprite manquant : ${src}`);
-            failedSprites.add(src);
+            preload(src).finally(() => {
+                // MAJ de la barre de progression
+                loadedCount++;
+                const pct = Math.floor((loadedCount / totalCount)*100);
+                loadingPercentage.textContent = pct + " %";
+                loadingBarFill.style.width = pct + "%";
             })
         )
     ).then(()=>{
-        // même si certain·e·s ont échoué, on continue
-        spritesReady = true;
-        playerDiv.classList.add('sprite-loaded');
-        spriteImgEl.style.display = 'block';
-        startSpriteAnimation();
+        // Toutes les ressources (ou presque) sont dans le cache
+        spritesReady   = true;
+        resourcesReady = true;
+        playerDiv.classList.add('sprite-loaded');   // dé-place l’overlay
+        spriteImgEl.style.display = 'block';        // montre l’image
+        startSpriteAnimation();                     // lance l’anim idle
+    
+        /* Fin de l’écran de chargement → on révèle l’écran titre,
+           et on ré-active le bouton “Commencer”                         */
+        loadingScreen.style.display = "none";
+        startScreen.style.display   = "flex";
+        startButton.disabled        = false;
+    
+        // On peut lancer l’initialisation UI maintenant
+        initializeApp();            // <-- était appelé avant : déplacez-le ici
     });
-
+    
 
     // --- État du Jeu ---
     let gameState = 'initial';
@@ -170,15 +220,18 @@ document.addEventListener('DOMContentLoaded', () => {
                  const msg = document.createElement('div');
                  msg.id = 'start-message';
                  // MODIFIÉ : Texte du message pour inclure swipe
-                 msg.textContent = "Swipe vers la droite pour Accélérer !";
+                 msg.textContent = "Swipe vers la droite pour accélérer";
                  msg.style.cssText = `
                     position: absolute;
                     top: 50%;
-                    left: 50%;
+                    left: 10%;
                     transform: translate(-50%, -50%);
-                    color: yellow;
+                    color: #FFD700;
                     font-size: 1.5em;
+                    font: 'Press Start 2P', 
+                    monospace;
                     font-weight: bold;
+                    animation:dropBounce .8s ease-out forwards;
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     z-index: 60;
                  `;
@@ -257,13 +310,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const phase = PHASES[phaseIndex];
         minSpeed = phase.baseSpeed * phase.minSpeedFactor;
         maxSpeed = phase.baseSpeed * phase.maxSpeedFactor;
+
+        showPhaseTitle(phase.name.toUpperCase()+" !");
     
         // arrière-plan
         background.style.backgroundColor = '';
         if (phase.backgroundStyle.startsWith('linear-gradient')) {
             background.style.backgroundImage = phase.backgroundStyle;
         } else {
-            background.style.backgroundImage = `url(${phase.backgroundStyle})`;
+            background.style.backgroundImage = `url(${resolveSpritePath(phase.backgroundStyle)})`;
         }
         background.style.backgroundSize = 'auto 100%';
         background.style.backgroundRepeat = 'repeat-x';
@@ -276,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
             playableArea.style.backgroundColor = phase.playableAreaStyle;
             playableArea.style.backgroundImage = '';
         } else {
-            playableArea.style.backgroundImage = `url(${phase.playableAreaStyle})`;
+            playableArea.style.backgroundImage = `url(${resolveSpritePath(phase.playableAreaStyle)})`;
         }
         playableArea.style.backgroundSize = 'auto 100%';
         playableArea.style.backgroundRepeat = 'repeat-x';
@@ -286,8 +341,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2) Hit-box et UI
         movePlayerToLane(playerLane);
         updateUI();
+        /*
         console.log(`Phase changed to: ${phase.name}`);
-        console.log(`Speed range: ${minSpeed.toFixed(1)} - ${maxSpeed.toFixed(1)} px/s (base: ${phase.baseSpeed.toFixed(1)})`);
+        console.log(`Speed range: ${minSpeed.toFixed(1)} - ${maxSpeed.toFixed(1)} px/s (base: ${phase.baseSpeed.toFixed(1)})`);*/
     
         // ─────── NOUVEAU : Animation de sprite ───────
         // mappe l’indice 0,1,2 → swim, bike, run
@@ -332,25 +388,19 @@ document.addEventListener('DOMContentLoaded', () => {
         obstacleElement.style.width  = `${w}px`;
         obstacleElement.style.height = `${h}px`;
 
-        if (config.isVertical) {
-            const roadPercent = ROAD_POSITIONS_HORIZONTAL[Math.floor(Math.random() * ROAD_POSITIONS_HORIZONTAL.length)];
-            initialX = (roadPercent / 100) * playableAreaWidth - w / 2;
-            initialY = -h;
-            initialX += (Math.random() - 0.5) * 15;
-        } else {
-            initialX = playableAreaWidth + 50;
-            laneIndex = Math.floor(Math.random() * LANES.length); // Assign laneIndex here
-            const laneBottomPercent = LANES[laneIndex];
-            // Calculate top based on lane bottom % and obstacle height
-            initialY = playableAreaHeight * (1 - (laneBottomPercent / 100)) - h / 2;
-            initialY += (Math.random() - 0.5) * 10;
-        }
+        initialX = playableAreaWidth + 50;
+        const lanesPool = config.allowedLanes ?? [...LANES.keys()]; // tableau d’indices autorisés
+        laneIndex = lanesPool[Math.floor(Math.random() * lanesPool.length)];
+        const laneBottomPercent = LANES[laneIndex];
+        // Calculate top based on lane bottom % and obstacle height
+        initialY = playableAreaHeight * (1 - (laneBottomPercent / 100)) - h / 2;
+        initialY += (Math.random() - 0.5) * 10;
 
         // Injection du sprite (seule cette ligne change ici)
         const spriteFile = OBSTACLE_SPRITES[type];
         if (spriteFile) {
         const img = new Image();
-        img.src = `./sprites/${spriteFile}`;
+        img.src = resolveSpritePath(spriteFile);
         img.classList.add('obstacle-sprite');
         img.onload  = () => obstacleElement.classList.add('sprite-loaded');
         img.onerror = () => console.warn(`Sprite obstacle manquant : ${spriteFile}`);
@@ -376,13 +426,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const element = obstacle.element;
             const config = obstacle.config;
 
-            if (config.isVertical) {
-                obstacle.x -= (currentSpeed * (config.speedFactor || 1.0)) * deltaTime;
-                obstacle.y += config.verticalSpeed * deltaTime;
-            } else {
-                obstacle.x -= (currentSpeed * (config.speedFactor || 1.0)) * deltaTime;
-                // y is constant for horizontal obstacles, set during spawn based on lane
-            }
+
+            obstacle.x -= (currentSpeed * (config.speedFactor || 1.0)) * deltaTime;
 
             element.style.left = `${obstacle.x}px`;
             element.style.top = `${obstacle.y}px`; // Always use top
@@ -391,14 +436,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const obstacleHeight = config.height * GLOBAL_SCALE;
             let shouldRemove = false;
 
-            if (config.isVertical) {
-                shouldRemove = obstacle.y > playableAreaHeight;
-            } else {
-                shouldRemove = obstacle.x + obstacleWidth < 0;
+            shouldRemove = obstacle.x + obstacleWidth < 0;
+
+            if (!shouldRemove && (obstacle.x > playableAreaWidth + 100 || obstacle.y + obstacleHeight < -100)) {
+                shouldRemove = true;
             }
-             if (!shouldRemove && (obstacle.x > playableAreaWidth + 100 || obstacle.y + obstacleHeight < -100)) {
-                 shouldRemove = true;
-             }
 
             if (shouldRemove) {
                 obstaclesContainer.removeChild(element);
@@ -485,11 +527,14 @@ document.addEventListener('DOMContentLoaded', () => {
             gameOver(); return;
         }
 
+
+
         // 6. Phase/Win Check
         if (currentPhaseIndex < PHASES.length - 1 && distanceCovered >= PHASES[currentPhaseIndex].distanceThreshold) {
-            setPhase(currentPhaseIndex + 1);
-             obstaclesContainer.innerHTML = '';
-             obstacles = [];
+
+            changePhase(currentPhaseIndex + 1);
+            obstaclesContainer.innerHTML = '';
+            obstacles = [];
         } else if (currentPhaseIndex === PHASES.length - 1 && distanceCovered >= TOTAL_GAME_DISTANCE) {
              gameWon(); return;
         }
@@ -503,8 +548,18 @@ document.addEventListener('DOMContentLoaded', () => {
         gameLoopId = requestAnimationFrame(gameLoop);
     }
 
+    function showPhaseTitle(text){
+        const h=document.createElement('h2');
+        h.className='phase-title';
+        h.textContent=text;
+        gameContainer.appendChild(h);
+        setTimeout(()=>h.remove(),1500);
+    }
+      
+
     function startGame() {
         // ... (Fonction startGame reste identique sauf pour le message console) ...
+        if(!resourcesReady) return;
         if (gameState === 'running') return;
         const startMessageElement = document.getElementById('start-message');
         if (startMessageElement) startMessageElement.remove();
@@ -543,12 +598,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function gameOver() {
-        // ... (Fonction gameOver reste identique) ...
         if (gameState === 'gameOver') return;
         console.log("Game Over!");
         gameState = 'gameOver';
         clearInterval(timerInterval);
         cancelAnimationFrame(gameLoopId);
+    
+        // ⭐ CHANGEMENT : on remplace l'image du pot de départ
+        const img = document.getElementById('victory-image');
+        img.src = './sprites/gameover.png';
+        img.alt = 'Écran Game Over';
+        // (optionnel) Ajustez sa taille si besoin :
+        // img.style.width = '200px'; img.style.height = '200px';
+    
         finalTimeDisplay.textContent = `Malheureusement vous n'êtes pas arrivé au travail en bon état aujourd'hui...`;
         gameOverScreen.querySelector('h2').textContent = "Game Over !";
         gameOverScreen.style.display = 'flex';
@@ -735,6 +797,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    initializeApp();
+    //initializeApp();
 
 });

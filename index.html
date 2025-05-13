@@ -15,6 +15,14 @@
             <span id="timer-display">Heures passées : 00:00</span>
         </div>
 
+        <!-- APRÈS : nouvel overlay de chargement -->
+        <div id="loading-screen">
+            <p>Chargement des ressources… <span id="loading-percentage">0 %</span></p>
+            <div id="loading-bar">
+                <div id="loading-bar-fill"></div>
+            </div>
+        </div>
+
         <!-- Zone de Jeu -->
         <div id="game-area">
             <!-- Arrière-plan (Défilement géré en CSS/JS) -->
@@ -34,14 +42,11 @@
             </div>
         </div>
 
-        <!-- Zones de Contrôle Invisibles (SUPPRIMÉES) -->
-        <!-- La div #controls et ses enfants #control-left, #control-right ont été supprimés -->
-
         <!-- Écran de Fin de Partie -->
         <div id="game-over-screen" style="display: none;">
             <!-- Remplacer 'placeholder-image.png' par le chemin vers l'image du pot de départ -->
-            <img src="placeholder-pot-depart.png" alt="Pot de départ !" id="victory-image" style="width:150px; height:150px; background-color: #ccc; margin-bottom: 20px;">
-            <h2>Arrivé à Bobigny !</h2>
+            <img src="./sprites/pot_depart.png" alt="Pot de départ !" id="victory-image" style="width:250px; height:250px; background-color: #ccc; margin-bottom: 20px;">
+            <h2>Arrivé à Bobigny pour ton pot de départ !</h2>
             <p id="final-time">Temps réalisé : 00:00</p>
             <button id="restart-button">Rejouer</button>
         </div>
