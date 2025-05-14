@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentPhase = PHASES[currentPhaseIndex];
         modeDisplay.textContent = `Étape : ${currentPhase.name}`;
         const distanceRemaining = Math.max(0, (TOTAL_GAME_DISTANCE - distanceCovered) / 1000);
-        distanceDisplay.textContent = `Distance jusqu'à Bobigny : ${distanceRemaining.toFixed(2)} km`;
+        distanceDisplay.textContent = `Distance à Bobigny : ${distanceRemaining.toFixed(2)} km`;
         timerDisplay.textContent = `Temps : ${formatTime(gameTime)}`;
 
         const startMessageElement = document.getElementById('start-message');
@@ -893,7 +893,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gameOverScreen.style.display = 'none';
         movePlayerToLane(playerLane);
         modeDisplay.textContent = `Étape : Prêt`;
-        distanceDisplay.textContent = `Distance jusqu'à Bobigny : ${TOTAL_GAME_DISTANCE / 1000} km`;
+        distanceDisplay.textContent = `Distance à Bobigny : ${TOTAL_GAME_DISTANCE / 1000} km`;
         timerDisplay.textContent = `Temps : 00h00`;
         // Appliquer le scale global au joueur une fois au début
         const playerElement = document.getElementById('player'); // S'assurer qu'on a l'élément
