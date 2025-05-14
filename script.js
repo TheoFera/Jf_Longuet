@@ -720,6 +720,9 @@ document.addEventListener('DOMContentLoaded', () => {
         finalTimeDisplay.textContent = `Bravo vous avez seulement mis ${formatTime(gameTime)} pour arriver au travail`;
         gameOverScreen.querySelector('h2').textContent = "Arrivé à Bobigny !";
         gameOverScreen.style.display = 'flex';
+
+        const img = document.getElementById('victory-image');
+        img.src = './sprites/pot_depart.png';
     }
 
     // --- Gestion des Contrôles (Swipe & Clavier) ---
