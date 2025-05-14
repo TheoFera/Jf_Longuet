@@ -30,7 +30,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const GLOBAL_SCALE = 1.3;
     const GLOBAL_OBSTACLE_DENSITY_FACTOR = 0.8;
     const INITIAL_START_SPEED = 10;
-    const GLOBAL_DISTANCE_FACTOR = 0.8;
+        // ——— Paliers d'accélération (fractions de l'intervalle [minSpeed->maxSpeed]) ———
+    const SPEED_STEPS = [0, 0.30, 0.60, 0.75, 0.875, 1]; // toujours croissant
+    function updateStepIndexFromSpeed(v) {
+        // pct ∈ [0,1] par rapport au min/max courants
+        const pct = (v - minSpeed) / (maxSpeed - minSpeed);
+        // on prend le plus GRAND palier ≤ pct
+        let idx = 0;
+        for (let i = 0; i < SPEED_STEPS.length; i++) {
+            if (pct >= SPEED_STEPS[i]) idx = i;
+            else break;
+        }
+        speedStepIndex = idx;
+    }
+    let   speedStepIndex = 0;                            // position courante dans le tableau
+    const GLOBAL_DISTANCE_FACTOR = 0.3;
     const PLAYABLE_BG_SCROLL_SPEED = 20;
 
     const PHASES = [
@@ -43,8 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
             baseObstacleFrequency: 1800
         },
         {
-            name: "Vélo", distanceThreshold: 11500, baseSpeed: 100,
-            minSpeedFactor: 0.1, maxSpeedFactor: 3.2,
+            name: "Vélo", distanceThreshold: 9000, baseSpeed: 100,
+            minSpeedFactor: 0.1, maxSpeedFactor: 5,
             backgroundStyle: 'bg_bike.png', //'linear-gradient(to bottom, #87CEEB, #A9A9A9)', 
             playableAreaStyle: 'ground_bike.png', // playableAreaStyle: 'ground_bike.png'
             obstacleTypes: ['voiture', 'egout', 'poubelle', 'voiture-statique'],
@@ -52,11 +66,11 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         {
             name: "Course", distanceThreshold: TOTAL_GAME_DISTANCE, baseSpeed: 100,
-            minSpeedFactor: 0.1, maxSpeedFactor: 2.5,
+            minSpeedFactor: 0.1, maxSpeedFactor: 3.5,
             backgroundStyle: 'bg_run.png', // 'linear-gradient(to bottom, #87CEEB, #7CFC00)',
             playableAreaStyle: 'ground_bike.png', //playableAreaStyle: 'ground_run.png',
-            obstacleTypes: ['pieton', 'egout', 'poubelle', 'voiture', 'pieton-sens-inverse', 'voiture-statique'],
-            baseObstacleFrequency: 2500
+            obstacleTypes: ['dechet', 'pieton', 'egout', 'poubelle', 'voiture', 'pieton-sens-inverse', 'voiture-statique'],
+            baseObstacleFrequency: 2800
         }
     ];
 
@@ -165,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (playPromise !== undefined) {
         playPromise.catch(() => {
           const unlock = () => {
-            bgMusic.play().catch(console.warn);
+            bgMusic.play().catch();
             document.removeEventListener('pointerdown', unlock);
           };
           document.addEventListener('pointerdown', unlock, { once: true });
@@ -330,6 +344,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const phase = PHASES[phaseIndex];
         minSpeed = phase.baseSpeed * phase.minSpeedFactor;
         maxSpeed = phase.baseSpeed * phase.maxSpeedFactor;
+
+        // La vitesse réelle peut avoir changé (nouveau min/max)
+        updateStepIndexFromSpeed(targetSpeed);
+        // On ré-applique le palier courant dans ce nouveau cadre
+        const pct = SPEED_STEPS[speedStepIndex];
+        targetSpeed = minSpeed + pct * (maxSpeed - minSpeed);
 
         showPhaseTitle(phase.name.toUpperCase()+" !");
     
@@ -597,6 +617,10 @@ document.addEventListener('DOMContentLoaded', () => {
         background.style.backgroundPositionX = '0px';
         playableArea.style.backgroundPositionX = '0px';
 
+        // ——— Reset de l'accélération progressive ———
+        speedStepIndex = 0;        // on part du palier 0 %
+        targetSpeed    = minSpeed; // juste après setPhase(0) ce sera ré-ajusté
+
         setPhase(0); // Initialise la phase 0
         currentSpeed = INITIAL_START_SPEED;
         targetSpeed = INITIAL_START_SPEED;
@@ -653,21 +677,25 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleSpeedUp() {
         if (gameState !== 'running') return;
 
-        // facteur k tel que k^5 = maxSpeed / initialSpeed
-        const k = Math.pow(maxSpeed / INITIAL_START_SPEED, 1 / 4);
-      
-        // on multiplie la cible par k, bornée par maxSpeed
-        targetSpeed = Math.min(maxSpeed, targetSpeed * k);
+        // Avance d’un palier si possible
+        if (speedStepIndex < SPEED_STEPS.length - 1) {
+            speedStepIndex++;
+            console.log(speedStepIndex)
+        }
+        // Mappage linéaire : minSpeed + % × (maxSpeed - minSpeed)
+        const pct = SPEED_STEPS[speedStepIndex];
+        targetSpeed = minSpeed + pct * (maxSpeed - minSpeed);
     }
 
     function handleSlowDown() {
         if (gameState !== 'running') return;
-      
-        // facteur d tel que d² = minSpeed / maxSpeed
-        const d = Math.pow(minSpeed / maxSpeed, 1 / 2);
-      
-        // on applique ce facteur à la cible, bornée par minSpeed
+
+        // Décélération brusque (inchangée)
+        const d = Math.pow(minSpeed / maxSpeed, 1 / 2);  // ≃ –80 %
         targetSpeed = Math.max(minSpeed, targetSpeed * d);
+
+        // On synchronise l’indice de palier avec la nouvelle vitesse cible
+        updateStepIndexFromSpeed(targetSpeed);
     }
 
     function handleChangeLane(direction) {
@@ -793,7 +821,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // 3. Boutons Start/Restart (Inchangés)
-    startButton.addEventListener('click', startGame);
+    startButton.addEventListener('click', () => {
+    // Lance le jeu
+    startGame();
+
+    // Lance la musique manuellement sur événement utilisateur
+    if (bgMusic && bgMusic.paused) {
+        bgMusic.volume = 0.6;
+        bgMusic.play().catch(console.warn);
+    }
+    });
     restartButton.addEventListener('click', startGame);
 
     // --- Initialisation (Inchangée) ---
