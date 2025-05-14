@@ -106,7 +106,6 @@ html, body {
     bottom: 50%; /* Ligne du milieu par défaut */
     transform: translateY(50%);
     transition: bottom 0.2s ease-out;
-    z-index: 50;
     pointer-events: none;
     border-radius: 50%;
 }
@@ -214,6 +213,15 @@ html, body {
     background-color:transparent;
     border:none;
 }
+
+#player-hitbox{
+  position:absolute;
+  pointer-events:none;
+  /* debug : outline:1px dashed red; */
+  /* largeur, hauteur, offsets seront définis en JS */
+}
+/*#player-hitbox{ outline:2px solid red; }
+.obstacle-hitbox-debug{ outline:2px solid lime; }*/
 
 /* Bare de chargement des images */
 #loading-screen{

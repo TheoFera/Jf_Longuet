@@ -9,6 +9,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const background = document.getElementById('background');
     const playableArea = document.getElementById('playable-area'); // La zone 75% du bas
     const player = document.getElementById('player');
+    // Facteurs de réduction : 70 % en largeur, 90 % en hauteur
+    const PLAYER_NATIVE_W = 45;   // largeur CSS d'origine
+    const PLAYER_NATIVE_H = 45;   // hauteur CSS d'origine
+    const PHASE_HITBOX = {
+        swim : { w:0.85, h:0.20, top:0.40 },   // natation
+        bike : { w:0.15, h:0.45, top:0.40 },   // vélo
+        run  : { w:0.32, h:0.48, top:0.45 }    // course
+    };
     const obstaclesContainer = document.getElementById('obstacles-container'); // Est dans playableArea
     /* APRÈS */
     const loadingScreen      = document.getElementById('loading-screen');
@@ -24,10 +32,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const bgMusic = document.getElementById('bg-music');
 
     // --- Configuration du Jeu ---
-    const TOTAL_GAME_DISTANCE = 15000;
+    const TOTAL_GAME_DISTANCE = 16000;
     const LANES = [15, 32.5, 50,  67.5, 85];
     //const ROAD_POSITIONS_HORIZONTAL = [60, 77.5, 95];
     const GLOBAL_SCALE = 1.3;
+    function applyPhaseHitbox(){
+        const hbConf   = PHASE_HITBOX[currentPhase];   // « swim », « bike » ou « run »
+        if(!hbConf) return;                            // sécurité
+
+        const playerEl = document.getElementById('player');
+        const hb       = document.getElementById('player-hitbox');
+
+        const pw = playerEl.offsetWidth;
+        const ph = playerEl.offsetHeight;
+
+        const hbW = pw * hbConf.w;
+        const hbH = ph * hbConf.h;
+
+        hb.style.width  = hbW + 'px';
+        hb.style.height = hbH + 'px';
+
+        hb.style.left   = (pw - hbW) / 2 + 'px';       // centré horizontalement
+        hb.style.top    = ph * hbConf.top + 'px';      // décalage vertical
+    }
+    function resetPlayerSize(){
+        const w = PLAYER_NATIVE_W * GLOBAL_SCALE;
+        const h = PLAYER_NATIVE_H * GLOBAL_SCALE;
+        player.style.width  = w + 'px';
+        player.style.height = h + 'px';
+    }
     const GLOBAL_OBSTACLE_DENSITY_FACTOR = 0.8;
     const INITIAL_START_SPEED = 10;
         // ——— Paliers d'accélération (fractions de l'intervalle [minSpeed->maxSpeed]) ———
@@ -44,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         speedStepIndex = idx;
     }
     let   speedStepIndex = 0;                            // position courante dans le tableau
-    const GLOBAL_DISTANCE_FACTOR = 0.3;
+    const GLOBAL_DISTANCE_FACTOR = 0.6;
     const PLAYABLE_BG_SCROLL_SPEED = 20;
 
     const PHASES = [
@@ -69,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
             minSpeedFactor: 0.1, maxSpeedFactor: 3.5,
             backgroundStyle: 'bg_run.png', // 'linear-gradient(to bottom, #87CEEB, #7CFC00)',
             playableAreaStyle: 'ground_bike.png', //playableAreaStyle: 'ground_run.png',
-            obstacleTypes: ['dechet', 'pieton', 'egout', 'poubelle', 'voiture', 'pieton-sens-inverse', 'voiture-statique'],
+            obstacleTypes: ['pieton', 'egout', 'poubelle', 'voiture', 'pieton-sens-inverse', 'voiture-statique'],
             baseObstacleFrequency: 2800
         }
     ];
@@ -92,10 +125,10 @@ document.addEventListener('DOMContentLoaded', () => {
         'dechet': { className: 'dechet', width: 30, height: 30, speedFactor: 1.0},
         'voiture': { className: 'voiture', width: 100, height: 50, speedFactor: 1.0, allowedLanes:[1,2,3,4]},
         'voiture-statique': { className: 'voiture-statique', width: 95, height: 45, speedFactor: 1.0, allowedLanes:[1,2,3,4]},
-        'pieton': { className: 'pieton', width: 45, height: 45, speedFactor: 1.0, allowedLanes:[0]},
+        'pieton': { className: 'pieton', width: 45, height: 45, speedFactor: 0.5, allowedLanes:[0]},
         'pieton-sens-inverse': { className: 'pieton-sens-inverse', width: 45, height: 43, speedFactor: 1.0, allowedLanes:[0]},
-        'poubelle': { className: 'poubelle', width: 60, height: 50, speedFactor: 1.0, allowedLanes:[0]},
-        'egout': { className: 'egout', width: 33, height: 33, speedFactor: 1.0},
+        'poubelle': { className: 'poubelle', width: 50, height: 45, speedFactor: 0.5, allowedLanes:[0]},
+        'egout': { className: 'egout', width: 23, height: 23, speedFactor: 0.5},
     };
 
     const SPRITES = {
@@ -107,6 +140,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const BASE_FRAME_DURATION = 250; // durée (ms) quand on roule à la vitesse de base
     const MIN_FRAME_DURATION  = 70;  // limite basse pour ne pas aller trop vite
     let frameTimer = 0;              // accumulateur interne
+
+    function setDepth(element, yFootPx){
+    /* plus yFoot est grand, plus on est « devant » */
+    element.style.zIndex = 100 + Math.floor(yFootPx);
+    }
 
     let currentPhase = 'swim';
     let frameIndex   = 0;
@@ -380,9 +418,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
         // 2) Hit-box et UI
         movePlayerToLane(playerLane);
-        updateUI();
-        /*console.log(`Phase changed to: ${phase.name}`);
-        console.log(`Speed range: ${minSpeed.toFixed(1)} - ${maxSpeed.toFixed(1)} px/s (base: ${phase.baseSpeed.toFixed(1)})`);*/
     
         // ─────── NOUVEAU : Animation de sprite ───────
         // mappe l’indice 0,1,2 → swim, bike, run
@@ -392,12 +427,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (spritesReady) {
             updateFrame();                          // applique immédiatement la première frame
         }
+
+        resetPlayerSize();
+        applyPhaseHitbox();   // ← ajoute ici
+        updateUI();
+
     }
     
     function movePlayerToLane(laneIndex) {
         playerLane = Math.max(0, Math.min(LANES.length - 1, laneIndex));
         const targetBottomPercent = LANES[playerLane];
         player.style.bottom = `${targetBottomPercent}%`;
+
+        const playableH = playableArea.offsetHeight;
+        const bottomPct = LANES[playerLane];        // 15 → 85 %
+        const yFoot     = playableH * (1 - bottomPct/100); /* px par rapport au top */
+        setDepth(player, yFoot);
     }
 
     function spawnObstacle() {
@@ -454,6 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
             element: obstacleElement, type: type, config: config,
             x: initialX, y: initialY, laneIndex: laneIndex
         });
+        obstacleElement.classList.add('obstacle-hitbox-debug');
     }
 
     function updateObstacles(deltaTime) {
@@ -474,6 +520,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const obstacleWidth = config.width * GLOBAL_SCALE;
             const obstacleHeight = config.height * GLOBAL_SCALE;
             let shouldRemove = false;
+            const yFoot = obstacle.y + obstacleHeight; // pied du sprite
+            setDepth(element, yFoot);
 
             shouldRemove = obstacle.x + obstacleWidth < 0;
 
@@ -490,7 +538,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function checkCollisions() {
-        const playerRect = player.getBoundingClientRect();
+          const playerRect = document
+                   .getElementById('player-hitbox')
+                   .getBoundingClientRect();
+
         for (const obstacle of obstacles) {
             const obstacleRect = obstacle.element.getBoundingClientRect();
             if ( playerRect.left < obstacleRect.right && playerRect.right > obstacleRect.left &&
@@ -844,13 +895,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Appliquer le scale global au joueur une fois au début
         const playerElement = document.getElementById('player'); // S'assurer qu'on a l'élément
         if(playerElement) {
-            const initialWidth = parseFloat(getComputedStyle(playerElement).width);
-            const initialHeight = parseFloat(getComputedStyle(playerElement).height);
-            playerElement.style.width  = `${initialWidth  * GLOBAL_SCALE}px`;
-            playerElement.style.height = `${initialHeight * GLOBAL_SCALE}px`;
+            resetPlayerSize();
         } else {
             console.error("Player element not found during initialization!");
         }
+        applyPhaseHitbox();   // ← ajoute ici
     }
 
     //initializeApp();
