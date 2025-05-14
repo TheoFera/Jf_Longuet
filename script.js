@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameOverScreen = document.getElementById('game-over-screen');
     const finalTimeDisplay = document.getElementById('final-time');
     const restartButton = document.getElementById('restart-button');
-    const bgMusic = document.getElementById('bg-music');
+    //const bgMusic = document.getElementById('bg-music');
 
     // --- Configuration du Jeu ---
     const TOTAL_GAME_DISTANCE = 16000;
@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
      // ── ③ Helper pour lancer la musique et gérer l’autoplay bloqué ──
-    function tryPlayMusic() {
+    /*function tryPlayMusic() {
       if (!bgMusic) return;
       bgMusic.volume = 0.6;
       const playPromise = bgMusic.play();
@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
           document.addEventListener('pointerdown', unlock, { once: true });
         });
       }
-    }
+    }*/
 
     // 3) Préchargement sans abort
     Promise.allSettled(
@@ -880,10 +880,10 @@ document.addEventListener('DOMContentLoaded', () => {
     startGame();
 
     // Lance la musique manuellement sur événement utilisateur
-    if (bgMusic && bgMusic.paused) {
+    /*if (bgMusic && bgMusic.paused) {
         bgMusic.volume = 0.6;
         bgMusic.play().catch(console.warn);
-    }
+    }*/
     });
     restartButton.addEventListener('click', startGame);
 
