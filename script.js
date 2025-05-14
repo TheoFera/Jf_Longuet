@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
             backgroundStyle: 'bg_run.png', // 'linear-gradient(to bottom, #87CEEB, #7CFC00)',
             playableAreaStyle: 'ground_bike.png', //playableAreaStyle: 'ground_run.png',
             obstacleTypes: ['pieton', 'egout', 'poubelle', 'voiture', 'pieton-sens-inverse', 'voiture-statique'],
-            baseObstacleFrequency: 2800
+            baseObstacleFrequency: 1800
         }
     ];
 
